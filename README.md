@@ -1,76 +1,56 @@
-# Lab 3: Chatbot vs ReAct Agent
+# Lab 3: Chatbot vs ReAct Agent (Industry Edition)
 
-Repo này là bài làm Lab 03: so sánh **Baseline Chatbot** với **ReAct Agent** trong ngữ cảnh e-commerce. Mục tiêu chính là trả lời câu hỏi: chatbot có thể nói nghe hợp lý, nhưng câu trả lời đó có thật sự có bằng chứng từ dữ liệu hay `Tool` không?
+Welcome to Phase 3 of the Agentic AI course! This lab focuses on moving from a simple LLM Chatbot to a sophisticated **ReAct Agent** with industry-standard monitoring.
 
-## Cài đặt
+## 🚀 Getting Started
 
-Tạo môi trường và cài thư viện:
-
+### 1. Setup Environment
+Copy the `.env.example` to `.env` and fill in your API keys:
 ```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+cp .env.example .env
 ```
 
-Nếu cần dùng API thật, tạo `.env` từ `.env.example`. Bài làm hiện tại không yêu cầu API key để chạy bộ kiểm thử deterministic.
-
-## Chạy kiểm thử
-
+### 2. Install Dependencies
 ```bash
-python -m pytest -q
+pip install -r requirements.txt
 ```
 
-## Sinh artifacts
+### 3. Directory Structure
+- `src/tools/`: Extension point for your custom tools.
 
-```bash
-python scripts/run_lab_evaluation.py
+## 🏠 Running with Local Models (CPU)
+
+If you don't want to use OpenAI or Gemini, you can run open-source models (like Phi-3) directly on your CPU using `llama-cpp-python`.
+
+### 1. Download the Model
+Download the **Phi-3-mini-4k-instruct-q4.gguf** (approx 2.2GB) from Hugging Face:
+- [Phi-3-mini-4k-instruct-GGUF](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf)
+- Direct Download: [phi-3-mini-4k-instruct-q4.gguf](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf)
+
+### 2. Place Model in Project
+Create a `models/` folder in the root and move the downloaded `.gguf` file there.
+
+### 3. Update `.env`
+Change your `DEFAULT_PROVIDER` and set the path:
+```env
+DEFAULT_PROVIDER=local
+LOCAL_MODEL_PATH=./models/Phi-3-mini-4k-instruct-q4.gguf
 ```
 
-Kết quả được lưu tại:
+## 🎯 Lab Objectives
 
-- `artifacts/evaluation/`
-- `artifacts/traces/`
+1.  **Baseline Chatbot**: Observe the limitations of a standard LLM when faced with multi-step reasoning.
+2.  **ReAct Loop**: Implement the `Thought-Action-Observation` cycle in `src/agent/agent.py`.
+3.  **Provider Switching**: Swap between OpenAI and Gemini seamlessly using the `LLMProvider` interface.
+4.  **Failure Analysis**: Use the structured logs in `logs/` to identify why the agent fails (hallucinations, parsing errors).
+5.  **Grading & Bonus**: Follow the [SCORING.md](file:///Users/tindt/personal/ai-thuc-chien/day03-lab-agent/SCORING.md) to maximize your points and explore bonus metrics.
 
-## Chạy thử bằng Ollama local
+## 🛠️ How to Use This Baseline
+The code is designed as a **Production Prototype**. It includes:
+- **Telemetry**: Every action is logged in JSON format for later analysis.
+- **Robust Provider Pattern**: Easily extendable to any LLM API.
+- **Clean Skeletons**: Focus on the logic that matters—the agent's reasoning process.
 
-Máy đã có Ollama và model `qwen2.5:3b`, nên có thể chạy smoke test bằng model thật local:
+---
 
-```bash
-python scripts/run_ollama_smoke.py
-python scripts/run_ollama_agent_smoke.py
-```
-
-Lưu ý: bộ chấm deterministic vẫn dùng `ScriptedLLM`. Ollama chỉ là live smoke test, kết quả có thể thay đổi theo model.
-
-## Thành phần đã hoàn thiện
-
-- `Baseline Chatbot`: `src/chatbot/chatbot.py`
-- `Tool` deterministic: `src/tools/tools.py`
-- `ReAct Agent V1`: `src/agent/agent.py`
-- `ReAct Agent V2`: `src/agent/agent_v2.py`
-- `OllamaProvider`: `src/core/ollama_provider.py`
-- Script evaluation: `scripts/run_lab_evaluation.py`
-- Script smoke test Ollama: `scripts/run_ollama_smoke.py`, `scripts/run_ollama_agent_smoke.py`
-- Artifacts evaluation: `artifacts/evaluation/`
-- Success trace và failure trace: `artifacts/traces/`
-- Live Ollama artifacts: `artifacts/live/`
-- Web UI: `web/index.html`
-
-## Web UI
-
-Mở trực tiếp file sau trong trình duyệt:
-
-```text
-web/index.html
-```
-
-UI hiển thị 5 test cases, kết quả so sánh Baseline Chatbot và ReAct Agent V2, `Tool path`, `Observation`, và luồng xử lý.
-
-## Kết quả chính
-
-- Baseline Chatbot: đúng với câu hỏi tĩnh, nhưng phải `safe fallback` khi cần giá, tồn kho, coupon, shipping hoặc tổng tiền.
-- ReAct Agent V2: dùng `Tool` để lấy bằng chứng trước khi trả lời các câu hỏi checkout.
-- V2 có thêm guardrail:
-  - chặn lặp cùng một `Action`;
-  - chặn `Final Answer` sớm khi chưa đủ `Tool evidence`.
+*Happy Coding! Let's build agents that actually work.*
