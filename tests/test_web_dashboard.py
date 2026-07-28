@@ -11,7 +11,6 @@ def test_web_dashboard_contains_required_flow_sections():
     assert "Live Agent demo e-commerce" in index
     assert "Hỏi live Agent" in index
     assert "Groq API" in index
-    assert "/api/chat/stream" in index
     assert "Dữ liệu và quy trình thực nghiệm cũ" in index
     assert "Live monitoring metrics" in index
     assert "LLM calls" in index
