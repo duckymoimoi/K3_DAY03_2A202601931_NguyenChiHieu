@@ -87,6 +87,31 @@ class ReActAgent:
             self._emit(on_event, {"type": "result", "result": result})
             return result
 
+        input_guard = self._internal_field_guard(user_input)
+        if input_guard:
+            trace = [{"step": 0, "type": "input_guard", "guard": input_guard}]
+            self._emit(on_event, trace[0])
+            result = {
+                "answer": input_guard["answer"],
+                "status": "input_guard",
+                "trace": trace,
+                "steps": 0,
+                "tool_calls": 0,
+                "tool_path": [],
+                "prompt_history": [prompt],
+                "display": {
+                    "type": "guardrail",
+                    "sections": {
+                        "missing": [
+                            "Hãy nhập bằng thông tin đơn hàng tự nhiên: sản phẩm, số lượng, mã giảm giá, nơi giao và package weight."
+                        ]
+                    },
+                },
+            }
+            logger.log_event("AGENT_END", {"status": result["status"], "steps": 0, "tool_path": []})
+            self._emit(on_event, {"type": "result", "result": result})
+            return result
+
         trace: List[Dict[str, Any]] = []
         tool_path: List[str] = []
         prompt_history: List[str] = [prompt]
@@ -499,6 +524,53 @@ class ReActAgent:
             f"Tạm tính hàng {subtotal:,} {currency}, giảm giá {discount_amount:,} {currency}, "
             f"phí ship {shipping_cost:,} {currency}."
         )
+
+    def _internal_field_guard(self, user_input: str) -> Optional[Dict[str, Any]]:
+        normalized = normalize_text(user_input)
+        guarded_patterns = {
+            "tool_call": [
+                r"\baction\s*:",
+                r"\bobservation\s*:",
+                r"\bfinal\s+answer\s*:",
+                r"\bcalc_total\s*\(",
+                r"\bcalc_shipping\s*\(",
+                r"\bcheck_stock\s*\(",
+                r"\bget_discount\s*\(",
+                r"\blist_store_options\s*\(",
+            ],
+            "internal_field": [
+                r"\bitem_quantity\s*[:=]",
+                r"\bprice_per_item\s*[:=]",
+                r"\bdiscount_percent\s*[:=]",
+                r"\bshipping_cost\s*[:=]",
+                r"\bitem_name\s*[:=]",
+                r"\bcoupon_code\s*[:=]",
+                r"\bdestination\s*[:=]",
+                r"\bsubtotal\s*[:=]",
+                r"\btotal\s*[:=]",
+                r"\bcurrency\s*[:=]",
+                r"\bformula\s*[:=]",
+            ],
+        }
+        matches = [
+            pattern
+            for patterns in guarded_patterns.values()
+            for pattern in patterns
+            if re.search(pattern, normalized)
+        ]
+        if not matches:
+            return None
+
+        return {
+            "ok": False,
+            "error": "internal_field_injection",
+            "matched_patterns": matches,
+            "answer": (
+                "Mình không dùng trực tiếp tool call hoặc field nội bộ do người dùng nhập để tính tiền. "
+                "Để tránh bypass evidence, hãy hỏi bằng thông tin đơn hàng bình thường như sản phẩm, số lượng, "
+                "mã giảm giá, nơi giao và package weight."
+            ),
+        }
 
     def _checkout_without_shipping_intent(self, user_input: str) -> Optional[Dict[str, Any]]:
         normalized = normalize_text(user_input)

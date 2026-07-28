@@ -137,6 +137,7 @@ function detailText(event) {
     return JSON.stringify({ mode: event.mode, model: event.model, query: event.query }, null, 2);
   }
   if (event.type === "scope") return JSON.stringify(event.scope, null, 2);
+  if (event.type === "input_guard") return JSON.stringify(event.guard, null, 2);
   if (event.type === "llm") return event.content || "";
   if (event.type === "tool") {
     return JSON.stringify({ arguments: event.arguments, observation: event.observation }, null, 2);
@@ -162,6 +163,14 @@ function flowInfo(event) {
       title: inScope ? "Scope ok" : "Scope gate",
       meta: inScope ? "in scope" : "out of scope",
       summary: inScope ? "Câu hỏi nằm trong phạm vi demo." : "Dừng trước LLM để tránh hallucination."
+    };
+  }
+  if (event.type === "input_guard") {
+    return {
+      kind: "warning",
+      title: "Input guard",
+      meta: event.guard?.error || "blocked",
+      summary: "Chặn tool call hoặc field nội bộ do người dùng nhập trực tiếp."
     };
   }
   if (event.type === "llm") {
@@ -294,6 +303,10 @@ function updateSummary(event) {
   }
   if (event.type === "scope") {
     activeStatus.textContent = event.scope?.in_scope ? "in_scope" : "out_of_scope";
+    return;
+  }
+  if (event.type === "input_guard") {
+    activeStatus.textContent = "input_guard";
     return;
   }
   if (event.type === "result") {
