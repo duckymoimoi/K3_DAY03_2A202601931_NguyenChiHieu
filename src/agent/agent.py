@@ -555,27 +555,34 @@ class ReActAgent:
         return None
 
     def _extract_coupon_code(self, normalized: str) -> Optional[str]:
-        for code in ["winner", "legacy", "student", "welcome5", "vip20"]:
-            if code in normalized:
-                return code.upper()
-        return None
+        candidates = [(normalized.rfind(code), code.upper()) for code in ["winner", "legacy", "student", "welcome5", "vip20"]]
+        candidates = [(index, code) for index, code in candidates if index >= 0]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda item: item[0])[1]
 
     def _extract_quantity(self, normalized: str, item_name: str) -> int:
         number_pattern = r"(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)"
+        item_token = self._quantity_item_token(item_name)
         correction_patterns = [
-            rf"\bkhong\s+(?:phai\s+)?{number_pattern}\s*(?:cai|chiec)?\s*(?:{normalize_text(item_name)})?\s*thoi\b",
-            rf"\b(?:sua|doi|chuyen)\s+(?:lai\s+)?(?:thanh\s+)?{number_pattern}\s*(?:cai|chiec)?\b",
+            rf"\bkhong\s+(?:phai\s+)?{number_pattern}\s*(?:cai|chiec)?\s*{item_token}s?\s*thoi\b",
+            rf"\bkhong\s+(?:phai\s+)?{number_pattern}\s*(?:cai|chiec)\s*thoi\b",
+            rf"\bkhong\s+(?:phai\s+)?so\s+luong\s+{number_pattern}\s*thoi\b",
+            rf"\b(?:sua|doi|chuyen)\s+(?:lai\s+)?(?:so\s+luong\s+)?(?:thanh|ve)\s+{number_pattern}\s*(?:cai|chiec)?\s*{item_token}s?\b",
+            rf"\b(?:sua|doi|chuyen)\s+(?:lai\s+)?so\s+luong\s+(?:(?:thanh|ve)\s+)?{number_pattern}\b",
         ]
         for pattern in correction_patterns:
             match = re.search(pattern, normalized)
             if match:
                 return self._quantity_value(match.group(1))
 
-        item_token = normalize_text(item_name).replace("airpods pro", "airpod")
-        match = re.search(rf"\b{number_pattern}\s*(?:cai|chiec)?\s*{re.escape(item_token)}s?\b", normalized)
+        match = re.search(rf"\b{number_pattern}\s*(?:cai|chiec)?\s*{item_token}s?\b", normalized)
         if match:
             return self._quantity_value(match.group(1))
         return 1
+
+    def _quantity_item_token(self, item_name: str) -> str:
+        return re.escape(normalize_text(item_name).replace("airpods pro", "airpod"))
 
     def _quantity_value(self, raw_value: str) -> int:
         if raw_value.isdigit():

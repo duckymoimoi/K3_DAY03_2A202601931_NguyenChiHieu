@@ -225,6 +225,30 @@ def test_v2_checkout_without_shipping_destination_asks_for_missing_slot_without_
     assert llm.calls == []
 
 
+def test_v2_quantity_correction_ignores_numbers_that_are_not_item_quantity():
+    llm = ScriptedLLM(['Action: check_stock({"item_name": "iPhone"})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=3)
+
+    result = agent.run("Tính tổng 2 iphone mã winner. Không 0.8 kg thôi")
+
+    assert result["status"] == "needs_shipping_destination"
+    assert result["display"]["sections"]["total"][1] == {"label": "Số lượng", "value": "2"}
+    assert "45,000,000 VND" in result["answer"]
+    assert llm.calls == []
+
+
+def test_v2_coupon_correction_does_not_turn_coupon_number_into_quantity():
+    llm = ScriptedLLM(['Action: check_stock({"item_name": "iPhone"})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=3)
+
+    result = agent.run("Tính tổng 2 iphone mã winner. Đổi mã sang VIP20")
+
+    assert result["status"] == "needs_shipping_destination"
+    assert result["display"]["sections"]["total"][1] == {"label": "Số lượng", "value": "2"}
+    assert "40,000,000 VND" in result["answer"]
+    assert llm.calls == []
+
+
 def test_v2_stops_safely_when_shipping_destination_is_unsupported():
     agent = ReActAgentV2(
         ScriptedLLM(['Action: calc_shipping({"weight": 0.8, "destination": "Phu Quoc"})']),
