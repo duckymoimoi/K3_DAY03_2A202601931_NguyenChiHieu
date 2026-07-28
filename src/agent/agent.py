@@ -4,7 +4,7 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.core.llm_provider import LLMProvider
-from src.core.domain_guard import classify_ecommerce_scope
+from src.core.domain_guard import classify_ecommerce_scope, normalize_text
 from src.telemetry.logger import logger
 
 
@@ -89,6 +89,7 @@ class ReActAgent:
         tool_path: List[str] = []
         prompt_history: List[str] = [prompt]
         previous_action: Optional[Tuple[str, Dict[str, Any]]] = None
+        repeated_recovery_actions: set[Tuple[str, str]] = set()
 
         for step in range(1, self.max_steps + 1):
             llm_result = self.llm.generate(prompt, system_prompt=self.get_system_prompt())
@@ -183,6 +184,25 @@ class ReActAgent:
                     self._emit(on_event, {"type": "result", "result": result})
                     return result
 
+                missing_tools = self._missing_required_tools(user_input, tool_path, trace)
+                recovery_key = (tool_name, json.dumps(arguments, ensure_ascii=False, sort_keys=True))
+                if missing_tools and recovery_key not in repeated_recovery_actions:
+                    repeated_recovery_actions.add(recovery_key)
+                    observation = {
+                        "ok": False,
+                        "error": "repeated_action_recovery",
+                        "message": "The repeated tool call was not executed. Use the existing observation and move to the next missing tool.",
+                        "tool": tool_name,
+                        "arguments": arguments,
+                        "missing_tools": missing_tools,
+                        "next_tool_hint": missing_tools[0],
+                    }
+                    trace.append({"step": step, "type": "observation", "observation": observation})
+                    self._emit(on_event, trace[-1])
+                    prompt = self._append_observation(prompt, raw_output, observation)
+                    prompt_history.append(prompt)
+                    continue
+
                 observation = {
                     "ok": False,
                     "error": "repeated_action",
@@ -225,6 +245,36 @@ class ReActAgent:
             self._emit(on_event, trace[-1])
             prompt = self._append_observation(prompt, self._executed_action_text(raw_output), observation)
             prompt_history.append(prompt)
+
+            if tool_name == "check_stock" and observation.get("status") == "out_of_stock":
+                final_answer = self._format_out_of_stock_answer(observation)
+                result = {
+                    "answer": final_answer,
+                    "status": "final_answer",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
+                return result
+
+            if tool_name == "calc_total" and observation.get("ok") is True and "total" in observation:
+                final_answer = self._format_total_answer(observation)
+                result = {
+                    "answer": final_answer,
+                    "status": "final_answer",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
+                return result
 
         result = {
             "answer": "I could not complete the task safely within the step limit.",
@@ -370,7 +420,7 @@ class ReActAgent:
         tool_path: List[str],
         trace: List[Dict[str, Any]],
     ) -> List[str]:
-        normalized = user_input.lower()
+        normalized = normalize_text(user_input)
         dynamic_item = any(term in normalized for term in ["iphone", "ipad", "macbook"])
         checkout_total = any(term in normalized for term in ["total", "how much", "bao nhieu", "tong tien"])
         if not dynamic_item or not checkout_total:
