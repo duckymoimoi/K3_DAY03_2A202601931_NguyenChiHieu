@@ -191,6 +191,41 @@ def test_v2_blocks_user_supplied_checkout_fields_before_llm_or_tools():
     assert llm.calls == []
 
 
+def test_v2_blocks_fractional_product_quantity_before_llm_or_tools():
+    llm = ScriptedLLM(['Action: list_store_options({"include_expired": false})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=4)
+
+    result = agent.run("Tôi muốn mua 1/2 chiếc iphone")
+
+    assert result["status"] == "input_guard"
+    assert result["tool_calls"] == 0
+    assert result["tool_path"] == []
+    assert result["trace"][0]["guard"]["error"] == "invalid_quantity"
+    assert "số nguyên dương" in result["answer"]
+    assert llm.calls == []
+
+
+def test_v2_allows_decimal_package_weight_when_quantity_is_integer():
+    agent = ReActAgentV2(
+        ScriptedLLM(
+            [
+                'Action: check_stock({"item_name": "iPhone"})',
+                'Action: get_discount({"coupon_code": "WINNER"})',
+                'Action: calc_shipping({"weight": 0.8, "destination": "Hanoi"})',
+                'Action: calc_total({"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000})',
+            ]
+        ),
+        TOOL_REGISTRY,
+        max_steps=5,
+    )
+
+    result = agent.run("Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền?")
+
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["check_stock", "get_discount", "calc_shipping", "calc_total"]
+    assert "45,038,000 VND" in result["answer"]
+
+
 def test_v2_lists_store_options_with_tool_evidence():
     agent = ReActAgentV2(
         ScriptedLLM(['Action: list_store_options({"include_expired": false})']),

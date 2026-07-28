@@ -89,28 +89,11 @@ class ReActAgent:
 
         input_guard = self._internal_field_guard(user_input)
         if input_guard:
-            trace = [{"step": 0, "type": "input_guard", "guard": input_guard}]
-            self._emit(on_event, trace[0])
-            result = {
-                "answer": input_guard["answer"],
-                "status": "input_guard",
-                "trace": trace,
-                "steps": 0,
-                "tool_calls": 0,
-                "tool_path": [],
-                "prompt_history": [prompt],
-                "display": {
-                    "type": "guardrail",
-                    "sections": {
-                        "missing": [
-                            "Hãy nhập bằng thông tin đơn hàng tự nhiên: sản phẩm, số lượng, mã giảm giá, nơi giao và package weight."
-                        ]
-                    },
-                },
-            }
-            logger.log_event("AGENT_END", {"status": result["status"], "steps": 0, "tool_path": []})
-            self._emit(on_event, {"type": "result", "result": result})
-            return result
+            return self._guardrail_result(input_guard, prompt, on_event)
+
+        input_guard = self._invalid_checkout_value_guard(user_input)
+        if input_guard:
+            return self._guardrail_result(input_guard, prompt, on_event)
 
         trace: List[Dict[str, Any]] = []
         tool_path: List[str] = []
@@ -571,6 +554,66 @@ class ReActAgent:
                 "mã giảm giá, nơi giao và package weight."
             ),
         }
+
+    def _invalid_checkout_value_guard(self, user_input: str) -> Optional[Dict[str, Any]]:
+        normalized = normalize_text(user_input)
+        item_name = self._extract_item_name(normalized)
+        if not item_name:
+            return None
+
+        item_token = self._quantity_item_token(item_name)
+        quantity_unit = r"(?:cai|chiec)?"
+        fraction_patterns = [
+            rf"\b\d+\s*/\s*\d+\s*{quantity_unit}\s*{item_token}s?\b",
+            rf"\b\d+\.\d+\s*{quantity_unit}\s*{item_token}s?\b",
+            rf"\b\d+,\d+\s*{quantity_unit}\s*{item_token}s?\b",
+        ]
+        matched_patterns = [pattern for pattern in fraction_patterns if re.search(pattern, normalized)]
+        if not matched_patterns:
+            return None
+
+        return {
+            "ok": False,
+            "error": "invalid_quantity",
+            "matched_patterns": matched_patterns,
+            "answer": (
+                "Số lượng sản phẩm phải là số nguyên dương. "
+                "Mình chưa thể xử lý đơn mua 1/2 hoặc số lẻ sản phẩm. "
+                "Bạn nhập lại số lượng như 1 iPhone hoặc 2 iPhone nhé."
+            ),
+        }
+
+    def _guardrail_result(
+        self,
+        guard: Dict[str, Any],
+        prompt: str,
+        on_event: Optional[Callable[[Dict[str, Any]], None]],
+    ) -> Dict[str, Any]:
+        trace = [{"step": 0, "type": "input_guard", "guard": guard}]
+        self._emit(on_event, trace[0])
+        missing_text = (
+            "Hãy nhập bằng thông tin đơn hàng tự nhiên: sản phẩm, số lượng, mã giảm giá, nơi giao và package weight."
+        )
+        if guard.get("error") == "invalid_quantity":
+            missing_text = "Nhập lại số lượng sản phẩm bằng số nguyên dương, ví dụ 1 iPhone hoặc 2 iPhone."
+        result = {
+            "answer": guard["answer"],
+            "status": "input_guard",
+            "trace": trace,
+            "steps": 0,
+            "tool_calls": 0,
+            "tool_path": [],
+            "prompt_history": [prompt],
+            "display": {
+                "type": "guardrail",
+                "sections": {
+                    "missing": [missing_text],
+                },
+            },
+        }
+        logger.log_event("AGENT_END", {"status": result["status"], "steps": 0, "tool_path": []})
+        self._emit(on_event, {"type": "result", "result": result})
+        return result
 
     def _checkout_without_shipping_intent(self, user_input: str) -> Optional[Dict[str, Any]]:
         normalized = normalize_text(user_input)
