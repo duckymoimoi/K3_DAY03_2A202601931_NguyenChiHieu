@@ -117,3 +117,16 @@ def test_out_of_stock_observation_turns_repeated_stock_call_into_final_answer():
     assert result["status"] == "final_answer"
     assert result["tool_path"] == ["calc_shipping", "check_stock"]
     assert "MacBook is out of stock" in result["answer"]
+
+
+def test_v2_out_of_scope_question_stops_before_llm_or_tools():
+    llm = ScriptedLLM(["Final Answer: The weather is sunny."])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=4)
+
+    result = agent.run("What is the weather in Hanoi today?")
+
+    assert result["status"] == "out_of_scope"
+    assert result["steps"] == 0
+    assert result["tool_calls"] == 0
+    assert result["tool_path"] == []
+    assert llm.calls == []

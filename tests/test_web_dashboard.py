@@ -19,6 +19,8 @@ def test_web_dashboard_contains_required_flow_sections():
     assert "ReAct Agent V2" in index
     assert "/api/chat/stream" in app
     assert "graph-node" in app
+    assert "Scope gate" in app
+    assert "Stopped before LLM to avoid hallucination." in app
     assert "updateMetrics" in app
     assert "check_stock -> get_discount -> calc_shipping" in app
     assert "45,038,000 VND" in app

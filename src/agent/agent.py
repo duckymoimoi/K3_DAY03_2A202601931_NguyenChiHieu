@@ -4,6 +4,7 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.core.llm_provider import LLMProvider
+from src.core.domain_guard import classify_ecommerce_scope
 from src.telemetry.logger import logger
 
 
@@ -67,6 +68,23 @@ class ReActAgent:
         )
 
         prompt = f"Question: {user_input}"
+        scope = classify_ecommerce_scope(user_input)
+        if not scope["in_scope"]:
+            trace = [{"step": 0, "type": "scope", "scope": scope}]
+            self._emit(on_event, trace[0])
+            result = {
+                "answer": scope["answer"],
+                "status": "out_of_scope",
+                "trace": trace,
+                "steps": 0,
+                "tool_calls": 0,
+                "tool_path": [],
+                "prompt_history": [prompt],
+            }
+            logger.log_event("AGENT_END", {"status": result["status"], "steps": 0, "tool_path": []})
+            self._emit(on_event, {"type": "result", "result": result})
+            return result
+
         trace: List[Dict[str, Any]] = []
         tool_path: List[str] = []
         prompt_history: List[str] = [prompt]

@@ -1,6 +1,7 @@
 import unicodedata
 from typing import Any, Dict, Optional
 
+from src.core.domain_guard import classify_ecommerce_scope
 from src.core.llm_provider import LLMProvider
 from src.telemetry.logger import logger
 from src.telemetry.metrics import tracker
@@ -38,6 +39,22 @@ class BaselineChatbot:
             "BASELINE_CHATBOT_START",
             {"input": user_input, "model": self.llm.model_name},
         )
+
+        scope = classify_ecommerce_scope(user_input)
+        if not scope["in_scope"]:
+            response = {
+                "answer": scope["answer"],
+                "llm_calls": 0,
+                "tool_calls": 0,
+                "grounded": False,
+                "classification": "out_of_scope",
+                "missing_evidence": ["demo_scope"],
+                "usage": {},
+                "latency_ms": 0,
+                "provider": "scope_gate",
+            }
+            logger.log_event("BASELINE_CHATBOT_END", response)
+            return response
 
         result = self.llm.generate(user_input, system_prompt=self.system_prompt)
         answer = result.get("content", "").strip()

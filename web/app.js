@@ -197,7 +197,23 @@ cases.forEach((item, index) => {
 
 function nodeInfo(event) {
   if (event.type === "start") {
-    return { kind: "start", title: "Start", meta: event.provider, detail: JSON.stringify(event, null, 2) };
+    return {
+      kind: "start",
+      title: "Start",
+      meta: event.provider,
+      summary: `${event.mode} · ${event.model}`,
+      detail: JSON.stringify(event, null, 2)
+    };
+  }
+  if (event.type === "scope") {
+    const inScope = event.scope?.in_scope;
+    return {
+      kind: inScope ? "tool" : "warning",
+      title: inScope ? "Scope ok" : "Scope gate",
+      meta: inScope ? "in scope" : "out of scope",
+      summary: inScope ? "Question matches demo scope." : "Stopped before LLM to avoid hallucination.",
+      detail: JSON.stringify(event.scope, null, 2)
+    };
   }
   if (event.type === "llm") {
     const isFinal = event.content?.startsWith("Final Answer");
@@ -205,6 +221,7 @@ function nodeInfo(event) {
       kind: isFinal ? "final" : "llm",
       title: isFinal ? "Final draft" : "LLM",
       meta: `${event.latency_ms || 0}ms`,
+      summary: isFinal ? "Model proposes the final answer." : "Model chooses the next Thought/Action.",
       detail: event.content || ""
     };
   }
@@ -214,6 +231,7 @@ function nodeInfo(event) {
       kind: ok === "ok" ? "tool" : "warning",
       title: event.tool,
       meta: ok,
+      summary: ok === "ok" ? "Tool returned a grounded observation." : event.observation?.error || "Tool guardrail.",
       detail: JSON.stringify({ arguments: event.arguments, observation: event.observation }, null, 2)
     };
   }
@@ -222,6 +240,7 @@ function nodeInfo(event) {
       kind: "warning",
       title: event.observation?.error || "Observation",
       meta: "guardrail",
+      summary: event.observation?.message || "Application injected a guardrail observation.",
       detail: JSON.stringify(event.observation, null, 2)
     };
   }
@@ -230,6 +249,7 @@ function nodeInfo(event) {
       kind: "final",
       title: "Done",
       meta: event.result?.status || event.result?.classification || "result",
+      summary: event.result?.answer || "Request completed.",
       detail: JSON.stringify(event.result, null, 2)
     };
   }
@@ -241,10 +261,14 @@ function appendGraphNode(event) {
   const node = document.createElement("article");
   node.className = `graph-node ${item.kind}`;
   node.tabIndex = 0;
+  const stepNumber = liveGraph.children.length + 1;
   node.innerHTML = `
-    <span>${item.title}</span>
+    <b>${stepNumber}</b>
+    <div>
+      <span>${item.title}</span>
+      <p>${item.summary || ""}</p>
+    </div>
     <strong>${item.meta}</strong>
-    <pre class="node-detail">${item.detail}</pre>
   `;
   const showDetail = () => {
     graphDetailTitle.textContent = `${item.title} · ${item.meta}`;
@@ -254,7 +278,7 @@ function appendGraphNode(event) {
   node.addEventListener("focus", showDetail);
   node.addEventListener("click", showDetail);
   liveGraph.appendChild(node);
-  node.scrollIntoView({ behavior: "smooth", inline: "end", block: "nearest" });
+  node.scrollIntoView({ behavior: "smooth", block: "nearest" });
   showDetail();
 }
 
@@ -316,6 +340,10 @@ function updateSummary(event) {
   }
   if (event.type === "llm") {
     activeStatus.textContent = event.content?.startsWith("Final Answer") ? "answering" : "thinking";
+    return;
+  }
+  if (event.type === "scope") {
+    activeStatus.textContent = event.scope?.in_scope ? "in_scope" : "out_of_scope";
     return;
   }
   if (event.type === "result") {

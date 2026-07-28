@@ -69,6 +69,18 @@ def test_multistep_ecommerce_hook_is_safe_fallback_without_tool_evidence():
     assert "cannot calculate a grounded checkout total" in result["answer"]
 
 
+def test_baseline_out_of_scope_question_stops_before_llm_call():
+    llm = FakeLLM(["Final Answer: unsupported answer"])
+    chatbot = BaselineChatbot(llm)
+
+    result = chatbot.chat("Who won the football match yesterday?")
+
+    assert result["classification"] == "out_of_scope"
+    assert result["llm_calls"] == 0
+    assert result["tool_calls"] == 0
+    assert llm.calls == []
+
+
 def test_vietnamese_accented_checkout_query_marks_total_as_missing_evidence():
     llm = FakeLLM(["Không thể tính tổng tiền có bằng chứng nếu chưa gọi Tool."])
     chatbot = BaselineChatbot(llm)
