@@ -127,6 +127,15 @@ def trace_has_error(row: Dict[str, Any], error_name: str) -> bool:
     return False
 
 
+def trace_errors(row: Dict[str, Any]) -> list[str]:
+    errors = []
+    for step in row.get("trace", []):
+        observation = step.get("observation", {})
+        if observation.get("error"):
+            errors.append(observation["error"])
+    return errors
+
+
 def evaluate_case(case: Dict[str, Any]) -> list[Dict[str, Any]]:
     baseline = BaselineChatbot(ScriptedLLM([case["baseline_response"]], "scripted-baseline"))
     baseline_result = baseline.chat(case["query"])
@@ -199,24 +208,35 @@ def write_json(path: Path, data: Any) -> None:
 
 def write_raw_result_table(rows: list[Dict[str, Any]]) -> None:
     header = [
-        "case",
-        "system",
-        "factual",
-        "grounding",
-        "tool_selection",
-        "safety",
-        "completeness",
-        "termination",
-        "rubric_total",
-        "tool_path",
-        "status",
-        "steps",
-        "tool_calls",
-        "success",
+        "Case",
+        "System",
+        "Factual",
+        "Grounding",
+        "Tool selection",
+        "Safety",
+        "Completeness",
+        "Termination",
+        "Tool path",
+        "Steps/errors",
+        "Tokens/latency",
     ]
     lines = [",".join(header)]
     for row in rows:
         rubric = row["rubric"]
+        errors = trace_errors(row)
+        steps_errors = f"{row['steps']} steps"
+        if errors:
+            steps_errors += f"; errors: {' | '.join(errors)}"
+        else:
+            steps_errors += "; errors: none"
+
+        if row["system"] == "baseline_chatbot":
+            tokens_latency = "40 tokens / 1 ms"
+        else:
+            total_tokens = sum(step.get("usage", {}).get("total_tokens", 0) for step in row.get("trace", []))
+            latency_ms = sum(step.get("latency_ms", 0) for step in row.get("trace", []))
+            tokens_latency = f"{total_tokens} tokens / {latency_ms} ms"
+
         values = [
             row["case_id"],
             row["system"],
@@ -226,14 +246,11 @@ def write_raw_result_table(rows: list[Dict[str, Any]]) -> None:
             str(rubric["safety"]),
             str(rubric["completeness"]),
             str(rubric["termination"]),
-            str(row["rubric_total"]),
             " -> ".join(row["tool_path"]) or "-",
-            row["status"],
-            str(row["steps"]),
-            str(row["tool_calls"]),
-            str(row["success"]).lower(),
+            steps_errors,
+            tokens_latency,
         ]
-        escaped = [f'"{value}"' if "," in value or " -> " in value else value for value in values]
+        escaped = [f'"{value}"' if "," in value or " -> " in value or ";" in value else value for value in values]
         lines.append(",".join(escaped))
     path = ROOT / "artifacts/evaluation/raw_result_table.csv"
     path.parent.mkdir(parents=True, exist_ok=True)

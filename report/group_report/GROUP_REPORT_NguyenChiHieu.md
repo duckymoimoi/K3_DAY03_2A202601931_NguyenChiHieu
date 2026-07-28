@@ -79,7 +79,7 @@ Tóm tắt từ `artifacts/evaluation/summary.json`:
 | Baseline Chatbot | 0.40 | 0.60 | 0.00 | 0.00 | 1.00 | 1.00 | 0.00 | 1/1 ms | 40.00 |
 | ReAct Agent V2 | 1.00 | 0.00 | 0.00 | 0.00 | 1.00 | 2.80 | 1.80 | 1/1 ms | 40.00 |
 
-`artifacts/evaluation/raw_result_table.csv` lưu bảng raw theo rubric 0-2 cho từng case với các cột: factual, grounding, tool_selection, safety, completeness, termination, tool_path, status, steps và tool_calls.
+`artifacts/evaluation/raw_result_table.csv` lưu bảng raw theo đúng các cột: Case, System, Factual, Grounding, Tool selection, Safety, Completeness, Termination, Tool path, Steps/errors và Tokens/latency.
 
 Lưu ý: metrics deterministic dùng `ScriptedLLM`, nên latency/tokens chỉ là giá trị tái lập để kiểm tra orchestration. Metrics live API được ghi riêng trong `artifacts/monitoring/live_monitoring_summary.json`; không trộn với bảng deterministic.
 
