@@ -19,10 +19,14 @@ def test_web_dashboard_contains_chat_and_processing_flow_sections():
     assert "/api/chat/stream" in app
     assert "appendMessage" in app
     assert "appendFlowStep" in app
+    assert "renderResultMessage" in app
+    assert "answer-group" in app
     assert "flow-step" in app
     assert "Scope gate" in app
     assert ".workspace" in styles
     assert ".conversation-flow" in styles
     assert ".process-flow" in styles
+    assert ".answer-group" in styles
+    assert ".answer-kv" in styles
     assert "height: 100vh" in styles
     assert "resize: none" in styles

@@ -93,6 +93,36 @@ class ReActAgent:
         previous_action: Optional[Tuple[str, Dict[str, Any]]] = None
         repeated_recovery_actions: set[Tuple[str, str]] = set()
 
+        store_options_intent = self._store_options_intent(user_input)
+        if store_options_intent:
+            arguments = {"include_expired": False}
+            observation = self._execute_tool("list_store_options", arguments)
+            tool_path.append("list_store_options")
+            trace.append(
+                {
+                    "step": 1,
+                    "type": "tool",
+                    "tool": "list_store_options",
+                    "arguments": arguments,
+                    "observation": observation,
+                }
+            )
+            self._emit(on_event, trace[-1])
+            display = self._store_options_display(observation, store_options_intent)
+            result = {
+                "answer": self._format_store_options_answer(observation, store_options_intent),
+                "status": "final_answer",
+                "trace": trace,
+                "steps": 1,
+                "tool_calls": 1,
+                "tool_path": tool_path,
+                "prompt_history": prompt_history,
+                "display": display,
+            }
+            logger.log_event("AGENT_END", {"status": result["status"], "steps": 1, "tool_path": tool_path})
+            self._emit(on_event, {"type": "result", "result": result})
+            return result
+
         for step in range(1, self.max_steps + 1):
             llm_result = self.llm.generate(prompt, system_prompt=self.get_system_prompt())
             raw_output = llm_result.get("content", "") if isinstance(llm_result, dict) else str(llm_result)
@@ -264,7 +294,12 @@ class ReActAgent:
                 return result
 
             if tool_name == "list_store_options" and observation.get("ok") is True:
-                final_answer = self._format_store_options_answer(observation)
+                store_options_intent = self._store_options_intent(user_input) or {
+                    "products": True,
+                    "coupons": True,
+                    "shipping": True,
+                }
+                final_answer = self._format_store_options_answer(observation, store_options_intent)
                 result = {
                     "answer": final_answer,
                     "status": "final_answer",
@@ -273,6 +308,7 @@ class ReActAgent:
                     "tool_calls": len(tool_path),
                     "tool_path": tool_path,
                     "prompt_history": prompt_history,
+                    "display": self._store_options_display(observation, store_options_intent),
                 }
                 logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
                 self._emit(on_event, {"type": "result", "result": result})
@@ -303,6 +339,7 @@ class ReActAgent:
                     "tool_calls": len(tool_path),
                     "tool_path": tool_path,
                     "prompt_history": prompt_history,
+                    "display": self._total_display(observation),
                 }
                 logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
                 self._emit(on_event, {"type": "result", "result": result})
@@ -446,34 +483,76 @@ class ReActAgent:
             f"shipping {shipping_cost:,} {currency}."
         )
 
-    def _format_store_options_answer(self, observation: Dict[str, Any]) -> str:
-        product_lines = []
-        for product in observation.get("products", []):
-            status = "in stock" if product.get("status") == "in_stock" else "out of stock"
-            product_lines.append(
-                f"{product['item_name']} ({product['price']:,} VND, {status}, "
-                f"{product['stock']} units, {product['weight_kg']} kg)"
-            )
-
-        coupon_lines = []
-        for coupon in observation.get("coupons", []):
-            status = "valid" if coupon.get("valid") else "expired"
-            coupon_lines.append(f"{coupon['coupon_code']} ({coupon['discount_percent']}%, {status})")
-
-        shipping_lines = []
-        for option in observation.get("shipping_options", []):
-            shipping_lines.append(
-                f"{option['destination']} (base {option['base_cost']:,} VND + "
-                f"{option['per_kg']:,} VND/kg, {option['estimated_days']} day(s))"
-            )
-        destinations = "; ".join(shipping_lines) or ", ".join(observation.get("shipping_destinations", []))
-        return (
-            "Products: "
-            + "; ".join(product_lines)
-            + ". Coupons: "
-            + "; ".join(coupon_lines)
-            + f". Shipping: {destinations}."
+    def _store_options_intent(self, user_input: str) -> Optional[Dict[str, bool]]:
+        normalized = normalize_text(user_input)
+        checkout_query = any(term in normalized for term in ["tong tien", "checkout", "mua ", "buy", "purchase"])
+        listing_signal = any(
+            term in normalized
+            for term in ["hien co", "co nhung", "co cac", "danh sach", "liet ke", "nao", "bang gia", "cho toi biet", "kiem tra"]
         )
+        product_signal = any(term in normalized for term in ["san pham", "mat hang", "catalog", "ban gi", "co gi"])
+        coupon_signal = any(term in normalized for term in ["ma giam", "giam gia", "coupon", "voucher", "code"])
+        shipping_signal = any(term in normalized for term in ["gia ship", "phi ship", "bang gia ship", "shipping", "ship"])
+
+        if checkout_query or not listing_signal:
+            return None
+        if not any([product_signal, coupon_signal, shipping_signal]):
+            return None
+
+        return {
+            "products": product_signal,
+            "coupons": coupon_signal,
+            "shipping": shipping_signal,
+        }
+
+    def _store_options_display(self, observation: Dict[str, Any], intent: Dict[str, bool]) -> Dict[str, Any]:
+        sections = {}
+        if intent.get("products"):
+            sections["products"] = observation.get("products", [])
+        if intent.get("coupons"):
+            sections["coupons"] = observation.get("coupons", [])
+        if intent.get("shipping"):
+            sections["shipping"] = observation.get("shipping_options", [])
+        return {"type": "store_options", "sections": sections}
+
+    def _total_display(self, total_observation: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "checkout_total",
+            "sections": {
+                "total": [
+                    {"label": "Total", "value": f"{int(total_observation['total']):,} {total_observation.get('currency', 'VND')}"},
+                    {"label": "Subtotal", "value": f"{int(total_observation.get('subtotal', 0)):,} VND"},
+                    {"label": "Discount", "value": f"{int(total_observation.get('discount_amount', 0)):,} VND"},
+                    {"label": "Shipping", "value": f"{int(total_observation.get('shipping_cost', 0)):,} VND"},
+                ]
+            },
+        }
+
+    def _format_store_options_answer(self, observation: Dict[str, Any], intent: Dict[str, bool]) -> str:
+        lines = []
+        if intent.get("products"):
+            lines.append("Sản phẩm hiện có:")
+            for product in observation.get("products", []):
+                status = "còn hàng" if product.get("status") == "in_stock" else "hết hàng"
+                lines.append(
+                    f"- {product['item_name']}: {product['price']:,} VND, {status}, "
+                    f"stock {product['stock']}, weight {product['weight_kg']} kg"
+                )
+
+        if intent.get("coupons"):
+            lines.append("Mã giảm giá hiện có:")
+            for coupon in observation.get("coupons", []):
+                lines.append(f"- {coupon['coupon_code']}: giảm {coupon['discount_percent']}%")
+
+        if intent.get("shipping"):
+            lines.append("Bảng giá ship hiện có:")
+            for option in observation.get("shipping_options", []):
+                lines.append(
+                    f"- {option['destination']}: base {option['base_cost']:,} VND + "
+                    f"{option['per_kg']:,} VND/kg, ETA {option['estimated_days']} ngày"
+                )
+
+        return "\n".join(lines)
 
     def _format_shipping_error_answer(self, observation: Dict[str, Any]) -> str:
         error = observation.get("error")

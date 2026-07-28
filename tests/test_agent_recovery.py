@@ -170,13 +170,44 @@ def test_v2_lists_store_options_with_tool_evidence():
         max_steps=3,
     )
 
-    result = agent.run("Shop có những sản phẩm và mã giảm giá nào?")
+    result = agent.run("Shop có những sản phẩm, mã giảm giá và giá ship nào?")
 
     assert result["status"] == "final_answer"
     assert result["tool_path"] == ["list_store_options"]
     assert "AirPods Pro" in result["answer"]
     assert "VIP20" in result["answer"]
     assert "Da Nang" in result["answer"]
+    assert "products" in result["display"]["sections"]
+    assert "coupons" in result["display"]["sections"]
+
+
+def test_v2_lists_only_coupon_options_for_coupon_question_without_llm():
+    llm = ScriptedLLM(["Action: calc_shipping({})"])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=3)
+
+    result = agent.run("Kiểm tra cho tôi có các mã giảm giá nào")
+
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["list_store_options"]
+    assert result["display"]["sections"].keys() == {"coupons"}
+    assert "VIP20" in result["answer"]
+    assert "Products:" not in result["answer"]
+    assert llm.calls == []
+
+
+def test_v2_lists_only_shipping_prices_for_shipping_price_question_without_llm():
+    llm = ScriptedLLM(["Action: calc_shipping({})"])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=3)
+
+    result = agent.run("Cho tôi biết giá ship hiện có")
+
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["list_store_options"]
+    assert result["display"]["sections"].keys() == {"shipping"}
+    assert "Bảng giá ship hiện có" in result["answer"]
+    assert "Da Nang" in result["answer"]
+    assert "Products:" not in result["answer"]
+    assert llm.calls == []
 
 
 def test_v2_stops_safely_when_shipping_destination_is_unsupported():

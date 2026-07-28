@@ -32,13 +32,92 @@ function appendMessage(role, text) {
   const label = document.createElement("span");
   label.textContent = role === "user" ? "Bạn" : "Agent";
 
-  const body = document.createElement("p");
+  const body = document.createElement("div");
+  body.className = "message-body";
   body.textContent = text;
 
   message.append(label, body);
   conversationFlow.appendChild(message);
   message.scrollIntoView({ behavior: "smooth", block: "nearest" });
   return body;
+}
+
+function formatVnd(value) {
+  return `${Number(value).toLocaleString("en-US")} VND`;
+}
+
+function renderResultMessage(target, result) {
+  target.textContent = "";
+  const display = result?.display;
+  if (!display?.sections) {
+    target.textContent = result?.answer || "Không có answer.";
+    return;
+  }
+
+  if (display.sections.total) {
+    const group = document.createElement("section");
+    group.className = "answer-group total";
+    group.innerHTML = "<h3>Tổng đơn hàng</h3>";
+    const grid = document.createElement("div");
+    grid.className = "answer-kv";
+    display.sections.total.forEach((item) => {
+      const row = document.createElement("div");
+      row.innerHTML = `<span>${item.label}</span><strong>${item.value}</strong>`;
+      grid.appendChild(row);
+    });
+    group.appendChild(grid);
+    target.appendChild(group);
+  }
+
+  if (display.sections.products) {
+    const group = document.createElement("section");
+    group.className = "answer-group";
+    group.innerHTML = "<h3>Sản phẩm</h3>";
+    display.sections.products.forEach((product) => {
+      const item = document.createElement("article");
+      item.className = "answer-row";
+      item.innerHTML = `
+        <strong>${product.item_name}</strong>
+        <span>${formatVnd(product.price)} · ${product.status === "in_stock" ? "còn hàng" : "hết hàng"}</span>
+        <small>Stock: ${product.stock} · Weight: ${product.weight_kg} kg</small>
+      `;
+      group.appendChild(item);
+    });
+    target.appendChild(group);
+  }
+
+  if (display.sections.coupons) {
+    const group = document.createElement("section");
+    group.className = "answer-group";
+    group.innerHTML = "<h3>Mã giảm giá</h3>";
+    display.sections.coupons.forEach((coupon) => {
+      const item = document.createElement("article");
+      item.className = "answer-row compact";
+      item.innerHTML = `
+        <strong>${coupon.coupon_code}</strong>
+        <span>Giảm ${coupon.discount_percent}%</span>
+      `;
+      group.appendChild(item);
+    });
+    target.appendChild(group);
+  }
+
+  if (display.sections.shipping) {
+    const group = document.createElement("section");
+    group.className = "answer-group";
+    group.innerHTML = "<h3>Bảng giá ship</h3>";
+    display.sections.shipping.forEach((option) => {
+      const item = document.createElement("article");
+      item.className = "answer-row";
+      item.innerHTML = `
+        <strong>${option.destination}</strong>
+        <span>Base ${formatVnd(option.base_cost)} + ${formatVnd(option.per_kg)}/kg</span>
+        <small>ETA: ${option.estimated_days} ngày</small>
+      `;
+      group.appendChild(item);
+    });
+    target.appendChild(group);
+  }
 }
 
 function detailText(event) {
@@ -248,7 +327,7 @@ async function runLive(mode) {
         updateSummary(event);
         updateMetrics(event);
         if (event.type === "result") {
-          assistantMessage.textContent = event.result?.answer || "Không có answer.";
+          renderResultMessage(assistantMessage, event.result);
         }
         if (event.type === "error") throw new Error(event.message || event.error);
       }
