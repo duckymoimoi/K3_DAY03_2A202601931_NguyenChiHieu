@@ -15,7 +15,7 @@ def test_web_dashboard_contains_required_flow_sections():
     assert "Dữ liệu và quy trình thực nghiệm cũ" in index
     assert "Live monitoring metrics" in index
     assert "LLM calls" in index
-    assert "Cost estimate" in index
+    assert "Token ratio" in index
     assert "Baseline Chatbot" in index
     assert "ReAct Agent V2" in index
     assert "/api/chat/stream" in app

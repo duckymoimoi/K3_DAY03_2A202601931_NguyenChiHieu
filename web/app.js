@@ -136,7 +136,6 @@ const metricLlmCalls = document.querySelector("#metricLlmCalls");
 const metricToolCalls = document.querySelector("#metricToolCalls");
 const metricTokens = document.querySelector("#metricTokens");
 const metricLatency = document.querySelector("#metricLatency");
-const metricCost = document.querySelector("#metricCost");
 const metricRatio = document.querySelector("#metricRatio");
 
 let liveMetrics = {
@@ -275,12 +274,10 @@ function renderMetrics() {
   const ratio = liveMetrics.promptTokens
     ? liveMetrics.completionTokens / liveMetrics.promptTokens
     : 0;
-  const cost = (liveMetrics.totalTokens / 1000) * 0.01;
   metricLlmCalls.textContent = liveMetrics.llmCalls;
   metricToolCalls.textContent = liveMetrics.toolCalls;
   metricTokens.textContent = liveMetrics.totalTokens.toLocaleString("en-US");
   metricLatency.textContent = `${liveMetrics.latencyMs.toLocaleString("en-US")} ms`;
-  metricCost.textContent = `$${cost.toFixed(6)}`;
   metricRatio.textContent = ratio.toFixed(2);
 }
 
