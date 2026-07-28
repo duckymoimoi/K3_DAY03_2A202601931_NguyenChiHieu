@@ -54,3 +54,34 @@ The code is designed as a **Production Prototype**. It includes:
 ---
 
 *Happy Coding! Let's build agents that actually work.*
+
+## Completed Lab Artifacts
+
+This fork includes a deterministic e-commerce implementation for the lab guide:
+
+- Baseline chatbot: `src/chatbot/chatbot.py`
+- Deterministic tools: `src/tools/tools.py`
+- ReAct Agent V1: `src/agent/agent.py`
+- ReAct Agent V2: `src/agent/agent_v2.py`
+- Evaluation script: `scripts/run_lab_evaluation.py`
+- Evaluation artifacts: `artifacts/evaluation/`
+- Success and failure traces: `artifacts/traces/`
+- Clean web UI dashboard: `web/index.html`
+
+Run tests:
+
+```bash
+python -m pytest -q
+```
+
+Generate artifacts:
+
+```bash
+python scripts/run_lab_evaluation.py
+```
+
+Open the UI directly in a browser:
+
+```text
+web/index.html
+```

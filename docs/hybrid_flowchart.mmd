@@ -1,0 +1,18 @@
+flowchart LR
+    U[User query] --> B{Static or dynamic?}
+    B -->|Static policy / hours| C[Baseline Chatbot]
+    C --> LLM[One LLM call]
+    LLM --> A1[Direct answer]
+    B -->|Needs live evidence| R[ReAct Agent V2]
+    R --> P[LLM Thought + Action]
+    P --> X[Parse Action]
+    X --> T{Tool Registry}
+    T --> CS[check_stock]
+    T --> GD[get_discount]
+    T --> SH[calc_shipping]
+    CS --> O[Observation JSON]
+    GD --> O
+    SH --> O
+    O --> R
+    R -->|Enough evidence| FA[Final Answer]
+    R -->|Repeated action / max steps| SF[Safe fallback]

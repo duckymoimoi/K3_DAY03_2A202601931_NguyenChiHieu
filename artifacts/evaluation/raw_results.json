@@ -1,0 +1,330 @@
+{
+  "rows": [
+    {
+      "case_id": "case_1_return_policy",
+      "system": "baseline_chatbot",
+      "query": "What is your return policy?",
+      "status": "direct_answer",
+      "answer": "You can return eligible products within 7 days with the receipt.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": true,
+      "safe_fallback": false
+    },
+    {
+      "case_id": "case_1_return_policy",
+      "system": "react_agent_v2",
+      "query": "What is your return policy?",
+      "status": "final_answer",
+      "answer": "You can return eligible products within 7 days with the receipt.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": true,
+      "safe_fallback": false,
+      "trace": [
+        {
+          "step": 1,
+          "type": "llm",
+          "content": "Final Answer: You can return eligible products within 7 days with the receipt."
+        }
+      ]
+    },
+    {
+      "case_id": "case_2_working_hours",
+      "system": "baseline_chatbot",
+      "query": "What are your working hours?",
+      "status": "direct_answer",
+      "answer": "Our demo store works from 8:00 to 21:00 every day.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": true,
+      "safe_fallback": false
+    },
+    {
+      "case_id": "case_2_working_hours",
+      "system": "react_agent_v2",
+      "query": "What are your working hours?",
+      "status": "final_answer",
+      "answer": "Our demo store works from 8:00 to 21:00 every day.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": true,
+      "safe_fallback": false,
+      "trace": [
+        {
+          "step": 1,
+          "type": "llm",
+          "content": "Final Answer: Our demo store works from 8:00 to 21:00 every day."
+        }
+      ]
+    },
+    {
+      "case_id": "case_3_iphone_winner_hanoi",
+      "system": "baseline_chatbot",
+      "query": "I want to buy 2 iPhones using code 'WINNER' and ship to Hanoi. The package weight is 0.8 kg. Total?",
+      "status": "safe_fallback",
+      "answer": "I cannot calculate a grounded total without stock, price, coupon, and shipping evidence.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": false,
+      "safe_fallback": true
+    },
+    {
+      "case_id": "case_3_iphone_winner_hanoi",
+      "system": "react_agent_v2",
+      "query": "I want to buy 2 iPhones using code 'WINNER' and ship to Hanoi. The package weight is 0.8 kg. Total?",
+      "status": "final_answer",
+      "answer": "Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
+      "tool_path": [
+        "check_stock",
+        "get_discount",
+        "calc_shipping"
+      ],
+      "tool_calls": 3,
+      "steps": 4,
+      "success": true,
+      "safe_fallback": false,
+      "trace": [
+        {
+          "step": 1,
+          "type": "llm",
+          "content": "Thought: Need stock and price.\nAction: check_stock({\"item_name\": \"iPhone\"})"
+        },
+        {
+          "step": 1,
+          "type": "tool",
+          "tool": "check_stock",
+          "arguments": {
+            "item_name": "iPhone"
+          },
+          "observation": {
+            "ok": true,
+            "item_name": "iPhone",
+            "price": 25000000,
+            "stock": 15,
+            "weight_kg": 0.4,
+            "status": "in_stock"
+          }
+        },
+        {
+          "step": 2,
+          "type": "llm",
+          "content": "Thought: Need coupon evidence.\nAction: get_discount({\"coupon_code\": \"WINNER\"})"
+        },
+        {
+          "step": 2,
+          "type": "tool",
+          "tool": "get_discount",
+          "arguments": {
+            "coupon_code": "WINNER"
+          },
+          "observation": {
+            "ok": true,
+            "coupon_code": "WINNER",
+            "valid": true,
+            "discount_percent": 10
+          }
+        },
+        {
+          "step": 3,
+          "type": "llm",
+          "content": "Thought: Need shipping fee.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})"
+        },
+        {
+          "step": 3,
+          "type": "tool",
+          "tool": "calc_shipping",
+          "arguments": {
+            "weight": 0.8,
+            "destination": "Hanoi"
+          },
+          "observation": {
+            "ok": true,
+            "destination": "Hanoi",
+            "weight": 0.8,
+            "shipping_cost": 38000,
+            "estimated_days": 1
+          }
+        },
+        {
+          "step": 4,
+          "type": "llm",
+          "content": "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND."
+        }
+      ]
+    },
+    {
+      "case_id": "case_4_macbook_out_of_stock",
+      "system": "baseline_chatbot",
+      "query": "Can I buy 1 MacBook and ship to Saigon? How much?",
+      "status": "safe_fallback",
+      "answer": "I cannot verify MacBook stock or a grounded total without catalog and shipping tools.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": false,
+      "safe_fallback": true
+    },
+    {
+      "case_id": "case_4_macbook_out_of_stock",
+      "system": "react_agent_v2",
+      "query": "Can I buy 1 MacBook and ship to Saigon? How much?",
+      "status": "final_answer",
+      "answer": "MacBook is out of stock, so I cannot claim the purchase can be completed.",
+      "tool_path": [
+        "check_stock"
+      ],
+      "tool_calls": 1,
+      "steps": 2,
+      "success": true,
+      "safe_fallback": false,
+      "trace": [
+        {
+          "step": 1,
+          "type": "llm",
+          "content": "Thought: Need stock before pricing checkout.\nAction: check_stock({\"item_name\": \"MacBook\"})"
+        },
+        {
+          "step": 1,
+          "type": "tool",
+          "tool": "check_stock",
+          "arguments": {
+            "item_name": "MacBook"
+          },
+          "observation": {
+            "ok": true,
+            "item_name": "MacBook",
+            "price": 35000000,
+            "stock": 0,
+            "weight_kg": 2.0,
+            "status": "out_of_stock"
+          }
+        },
+        {
+          "step": 2,
+          "type": "llm",
+          "content": "Final Answer: MacBook is out of stock, so I cannot claim the purchase can be completed."
+        }
+      ]
+    },
+    {
+      "case_id": "case_5_ipad_legacy_saigon",
+      "system": "baseline_chatbot",
+      "query": "I want to buy 1 iPad using code 'LEGACY' and ship to Saigon. The package weight is 0.5 kg. How much?",
+      "status": "safe_fallback",
+      "answer": "I cannot calculate a grounded total without checking price, coupon validity, and shipping.",
+      "tool_path": [],
+      "tool_calls": 0,
+      "steps": 1,
+      "success": false,
+      "safe_fallback": true
+    },
+    {
+      "case_id": "case_5_ipad_legacy_saigon",
+      "system": "react_agent_v2",
+      "query": "I want to buy 1 iPad using code 'LEGACY' and ship to Saigon. The package weight is 0.5 kg. How much?",
+      "status": "final_answer",
+      "answer": "LEGACY is expired, so no discount applies. Total = 18,000,000 + 45,000 = 18,045,000 VND.",
+      "tool_path": [
+        "check_stock",
+        "get_discount",
+        "calc_shipping"
+      ],
+      "tool_calls": 3,
+      "steps": 4,
+      "success": true,
+      "safe_fallback": false,
+      "trace": [
+        {
+          "step": 1,
+          "type": "llm",
+          "content": "Thought: Need item stock and price.\nAction: check_stock({\"item_name\": \"iPad\"})"
+        },
+        {
+          "step": 1,
+          "type": "tool",
+          "tool": "check_stock",
+          "arguments": {
+            "item_name": "iPad"
+          },
+          "observation": {
+            "ok": true,
+            "item_name": "iPad",
+            "price": 18000000,
+            "stock": 8,
+            "weight_kg": 0.5,
+            "status": "in_stock"
+          }
+        },
+        {
+          "step": 2,
+          "type": "llm",
+          "content": "Thought: Need coupon validity.\nAction: get_discount({\"coupon_code\": \"LEGACY\"})"
+        },
+        {
+          "step": 2,
+          "type": "tool",
+          "tool": "get_discount",
+          "arguments": {
+            "coupon_code": "LEGACY"
+          },
+          "observation": {
+            "ok": false,
+            "error": "coupon_expired",
+            "message": "Coupon 'LEGACY' is expired, so no discount should be applied.",
+            "coupon_code": "LEGACY",
+            "valid": false,
+            "discount_percent": 0
+          }
+        },
+        {
+          "step": 3,
+          "type": "llm",
+          "content": "Thought: Coupon is expired; need shipping before final total.\nAction: calc_shipping({\"weight\": 0.5, \"destination\": \"Saigon\"})"
+        },
+        {
+          "step": 3,
+          "type": "tool",
+          "tool": "calc_shipping",
+          "arguments": {
+            "weight": 0.5,
+            "destination": "Saigon"
+          },
+          "observation": {
+            "ok": true,
+            "destination": "Saigon",
+            "weight": 0.5,
+            "shipping_cost": 45000,
+            "estimated_days": 2
+          }
+        },
+        {
+          "step": 4,
+          "type": "llm",
+          "content": "Final Answer: LEGACY is expired, so no discount applies. Total = 18,000,000 + 45,000 = 18,045,000 VND."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "baseline_chatbot": {
+      "case_count": 5,
+      "success_rate": 0.4,
+      "safe_fallback_rate": 0.6,
+      "average_steps": 1.0,
+      "average_tool_calls": 0.0
+    },
+    "react_agent_v2": {
+      "case_count": 5,
+      "success_rate": 1.0,
+      "safe_fallback_rate": 0.0,
+      "average_steps": 2.4,
+      "average_tool_calls": 1.4
+    }
+  }
+}

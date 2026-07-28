@@ -1,0 +1,16 @@
+{
+  "baseline_chatbot": {
+    "case_count": 5,
+    "success_rate": 0.4,
+    "safe_fallback_rate": 0.6,
+    "average_steps": 1.0,
+    "average_tool_calls": 0.0
+  },
+  "react_agent_v2": {
+    "case_count": 5,
+    "success_rate": 1.0,
+    "safe_fallback_rate": 0.0,
+    "average_steps": 2.4,
+    "average_tool_calls": 1.4
+  }
+}

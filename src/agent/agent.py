@@ -1,74 +1,211 @@
-import os
+import json
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
 from src.core.llm_provider import LLMProvider
 from src.telemetry.logger import logger
 
+
 class ReActAgent:
     """
-    SKELETON: A ReAct-style Agent that follows the Thought-Action-Observation loop.
-    Students should implement the core loop logic and tool execution.
+    ReAct-style Agent following Thought -> Action -> Observation -> Final Answer.
     """
-    
-    def __init__(self, llm: LLMProvider, tools: List[Dict[str, Any]], max_steps: int = 5):
+
+    def __init__(
+        self,
+        llm: LLMProvider,
+        tools: List[Dict[str, Any]],
+        max_steps: int = 5,
+        version: str = "v1",
+        detect_repeated_action: bool = False,
+    ):
         self.llm = llm
         self.tools = tools
         self.max_steps = max_steps
+        self.version = version
+        self.detect_repeated_action = detect_repeated_action
         self.history = []
 
     def get_system_prompt(self) -> str:
-        """
-        TODO: Implement the system prompt that instructs the agent to follow ReAct.
-        Should include:
-        1.  Available tools and their descriptions.
-        2.  Format instructions: Thought, Action, Observation.
-        """
-        tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
+        tool_descriptions = "\n".join(
+            [
+                f"- {tool['name']}: {tool['description']} Example input: "
+                f"{json.dumps(tool.get('input_example', {}), ensure_ascii=False)}"
+                for tool in self.tools
+            ]
+        )
         return f"""
-        You are an intelligent assistant. You have access to the following tools:
+        You are an e-commerce ReAct agent. Use tools only when dynamic evidence is needed.
+
+        Available tools:
         {tool_descriptions}
 
-        Use the following format:
-        Thought: your line of reasoning.
-        Action: tool_name(arguments)
-        Observation: result of the tool call.
-        ... (repeat Thought/Action/Observation if needed)
+        Output one of these formats:
+        Thought: brief reason for the next step.
+        Action: tool_name({{"argument": "value"}})
+
+        Or, when enough evidence is available:
         Final Answer: your final response.
+
+        Rules:
+        - Never invent tool names. Use only the listed tools.
+        - Never write Observation yourself; the application will append it.
+        - Do not claim checkout success until tool evidence supports stock, price,
+          coupon status, shipping fee, and final total.
+        - For static policy or working-hours questions, answer directly with Final Answer.
         """
 
-    def run(self, user_input: str) -> str:
-        """
-        TODO: Implement the ReAct loop logic.
-        1. Generate Thought + Action.
-        2. Parse Action and execute Tool.
-        3. Append Observation to prompt and repeat until Final Answer.
-        """
-        logger.log_event("AGENT_START", {"input": user_input, "model": self.llm.model_name})
-        
-        current_prompt = user_input
-        steps = 0
+    def run(self, user_input: str) -> Dict[str, Any]:
+        logger.log_event(
+            "AGENT_START",
+            {"input": user_input, "model": self.llm.model_name, "version": self.version},
+        )
 
-        while steps < self.max_steps:
-            # TODO: Generate LLM response
-            # result = self.llm.generate(current_prompt, system_prompt=self.get_system_prompt())
-            
-            # TODO: Parse Thought/Action from result
-            
-            # TODO: If Action found -> Call tool -> Append Observation
-            
-            # TODO: If Final Answer found -> Break loop
-            
-            steps += 1
-            
-        logger.log_event("AGENT_END", {"steps": steps})
-        return "Not implemented. Fill in the TODOs!"
+        prompt = f"Question: {user_input}"
+        trace: List[Dict[str, Any]] = []
+        tool_path: List[str] = []
+        prompt_history: List[str] = [prompt]
+        previous_action: Optional[Tuple[str, Dict[str, Any]]] = None
 
-    def _execute_tool(self, tool_name: str, args: str) -> str:
-        """
-        Helper method to execute tools by name.
-        """
-        for tool in self.tools:
-            if tool['name'] == tool_name:
-                # TODO: Implement dynamic function calling or simple if/else
-                return f"Result of {tool_name}"
-        return f"Tool {tool_name} not found."
+        for step in range(1, self.max_steps + 1):
+            llm_result = self.llm.generate(prompt, system_prompt=self.get_system_prompt())
+            raw_output = llm_result.get("content", "") if isinstance(llm_result, dict) else str(llm_result)
+            trace.append({"step": step, "type": "llm", "content": raw_output})
+
+            final_answer = self.parse_final_answer(raw_output)
+            if final_answer:
+                result = {
+                    "answer": final_answer,
+                    "status": "final_answer",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                return result
+
+            action = self.parse_action(raw_output)
+            if action is None:
+                observation = {
+                    "ok": False,
+                    "error": "parse_error",
+                    "message": "Expected Action: tool_name({...}) or Final Answer: ...",
+                    "raw_output": raw_output,
+                }
+                trace.append({"step": step, "type": "observation", "observation": observation})
+                prompt = self._append_observation(prompt, raw_output, observation)
+                prompt_history.append(prompt)
+                continue
+
+            tool_name, arguments = action
+            current_action = (tool_name, arguments)
+            if self.detect_repeated_action and previous_action == current_action:
+                observation = {
+                    "ok": False,
+                    "error": "repeated_action",
+                    "message": "The agent repeated the same tool call without new evidence.",
+                    "tool": tool_name,
+                    "arguments": arguments,
+                }
+                trace.append({"step": step, "type": "observation", "observation": observation})
+                result = {
+                    "answer": "I stopped because the agent repeated the same action without progress.",
+                    "status": "repeated_action",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                return result
+
+            previous_action = current_action
+            observation = self._execute_tool(tool_name, arguments)
+            if observation.get("ok") is not False:
+                tool_path.append(tool_name)
+            else:
+                tool_path.append(tool_name)
+
+            trace.append(
+                {
+                    "step": step,
+                    "type": "tool",
+                    "tool": tool_name,
+                    "arguments": arguments,
+                    "observation": observation,
+                }
+            )
+            prompt = self._append_observation(prompt, raw_output, observation)
+            prompt_history.append(prompt)
+
+        result = {
+            "answer": "I could not complete the task safely within the step limit.",
+            "status": "max_steps_exceeded",
+            "trace": trace,
+            "steps": self.max_steps,
+            "tool_calls": len(tool_path),
+            "tool_path": tool_path,
+            "prompt_history": prompt_history,
+        }
+        logger.log_event("AGENT_END", {"status": result["status"], "steps": self.max_steps, "tool_path": tool_path})
+        return result
+
+    def parse_action(self, text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+        match = re.search(r"Action:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\((\{.*?\})\)", text, re.DOTALL)
+        if not match:
+            return None
+        tool_name = match.group(1)
+        raw_args = match.group(2)
+        try:
+            arguments = json.loads(raw_args)
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(arguments, dict):
+            return None
+        return tool_name, arguments
+
+    def parse_final_answer(self, text: str) -> Optional[str]:
+        match = re.search(r"Final Answer:\s*(.*)", text, re.DOTALL)
+        if not match:
+            return None
+        answer = match.group(1).strip()
+        return answer or None
+
+    def _append_observation(self, prompt: str, raw_output: str, observation: Dict[str, Any]) -> str:
+        return (
+            f"{prompt}\n\n{raw_output.strip()}\n"
+            f"Observation: {json.dumps(observation, ensure_ascii=False)}"
+        )
+
+    def _execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        available_tools = {tool["name"]: tool for tool in self.tools}
+        tool = available_tools.get(tool_name)
+        if tool is None:
+            return {
+                "ok": False,
+                "error": "unknown_tool",
+                "message": f"Tool '{tool_name}' is not registered.",
+                "available_tools": sorted(available_tools),
+            }
+
+        try:
+            return tool["function"](**arguments)
+        except TypeError as exc:
+            return {
+                "ok": False,
+                "error": "invalid_arguments",
+                "message": str(exc),
+                "tool": tool_name,
+                "arguments": arguments,
+            }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": "tool_failure",
+                "message": str(exc),
+                "tool": tool_name,
+                "arguments": arguments,
+            }

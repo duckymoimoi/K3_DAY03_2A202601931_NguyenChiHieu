@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lab 03 Agent Flow Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Lab 03 · Chatbot vs ReAct Agent</p>
+          <h1>E-commerce Agent Trace Console</h1>
+        </div>
+        <div class="status-pill">Deterministic demo</div>
+      </header>
+
+      <section class="metrics" aria-label="Evaluation metrics">
+        <div>
+          <span>Baseline success</span>
+          <strong id="baselineSuccess">40%</strong>
+        </div>
+        <div>
+          <span>Agent V2 success</span>
+          <strong id="agentSuccess">100%</strong>
+        </div>
+        <div>
+          <span>Agent avg steps</span>
+          <strong id="avgSteps">2.4</strong>
+        </div>
+        <div>
+          <span>Avg tool calls</span>
+          <strong id="avgTools">1.4</strong>
+        </div>
+      </section>
+
+      <section class="visual-flow" aria-label="System flow">
+        <img src="assets/agent-flow.svg" alt="Flow from user query to chatbot, ReAct agent, tool registry, observation and final answer" />
+      </section>
+
+      <section class="case-strip" aria-label="Case selector">
+        <div class="section-heading">
+          <h2>5 shared test cases</h2>
+          <p>Chatbot và Agent nhận cùng input; chỉ Agent được gọi tool.</p>
+        </div>
+        <div id="caseButtons" class="case-buttons"></div>
+      </section>
+
+      <section class="comparison" aria-label="System comparison">
+        <article class="panel">
+          <div class="panel-title">
+            <span>Baseline Chatbot</span>
+            <b>1 LLM call · 0 tools</b>
+          </div>
+          <p id="baselineAnswer" class="answer"></p>
+          <dl class="kv">
+            <div><dt>Status</dt><dd id="baselineStatus"></dd></div>
+            <div><dt>Missing evidence</dt><dd id="baselineEvidence"></dd></div>
+          </dl>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <span>ReAct Agent V2</span>
+            <b>Thought → Action → Observation</b>
+          </div>
+          <p id="agentAnswer" class="answer"></p>
+          <dl class="kv">
+            <div><dt>Status</dt><dd id="agentStatus"></dd></div>
+            <div><dt>Tool path</dt><dd id="toolPath"></dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="trace-area" aria-label="Agent trace">
+        <div class="section-heading">
+          <h2>Observable trace</h2>
+          <p>Mỗi Action sinh đúng một Observation do application chèn vào.</p>
+        </div>
+        <div id="traceList" class="trace-list"></div>
+      </section>
+
+      <section class="tool-grid" aria-label="Tool contracts">
+        <div class="tool-card">
+          <span class="tool-dot blue"></span>
+          <h3>check_stock</h3>
+          <p>Returns price, stock, weight_kg, status.</p>
+        </div>
+        <div class="tool-card">
+          <span class="tool-dot green"></span>
+          <h3>get_discount</h3>
+          <p>Validates WINNER or returns structured coupon error.</p>
+        </div>
+        <div class="tool-card">
+          <span class="tool-dot amber"></span>
+          <h3>calc_shipping</h3>
+          <p>Calculates shipping cost and estimated days.</p>
+        </div>
+      </section>
+
+      <section class="rca">
+        <div>
+          <h2>V1 → V2 failure fix</h2>
+          <p>Failed trace: V1 repeated <code>check_stock</code> until max steps. V2 adds one guardrail: stop when the exact same tool and args repeat without new evidence.</p>
+        </div>
+        <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Open RCA artifact</a>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
