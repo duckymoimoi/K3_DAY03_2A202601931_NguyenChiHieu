@@ -4,17 +4,16 @@ const askBaseline = document.querySelector("#askBaseline");
 const liveStatus = document.querySelector("#liveStatus");
 const conversationFlow = document.querySelector("#conversationFlow");
 const liveGraph = document.querySelector("#liveGraph");
-const providerSelect = document.querySelector("#providerSelect");
-const activeProvider = document.querySelector("#activeProvider");
 const activeModel = document.querySelector("#activeModel");
 const activeStatus = document.querySelector("#activeStatus");
 const activeTools = document.querySelector("#activeTools");
-const providerStatus = document.querySelector("#providerStatus");
 const metricLlmCalls = document.querySelector("#metricLlmCalls");
 const metricToolCalls = document.querySelector("#metricToolCalls");
 const metricTokens = document.querySelector("#metricTokens");
 const metricLatency = document.querySelector("#metricLatency");
 const metricRatio = document.querySelector("#metricRatio");
+
+const DEFAULT_PROVIDER = "groq";
 
 let liveMetrics = {
   llmCalls: 0,
@@ -134,7 +133,9 @@ function renderResultMessage(target, result) {
 }
 
 function detailText(event) {
-  if (event.type === "start") return JSON.stringify(event, null, 2);
+  if (event.type === "start") {
+    return JSON.stringify({ mode: event.mode, model: event.model, query: event.query }, null, 2);
+  }
   if (event.type === "scope") return JSON.stringify(event.scope, null, 2);
   if (event.type === "llm") return event.content || "";
   if (event.type === "tool") {
@@ -150,7 +151,7 @@ function flowInfo(event) {
     return {
       kind: "start",
       title: "Start",
-      meta: event.provider,
+      meta: event.model,
       summary: `${event.mode} · ${event.model}`
     };
   }
@@ -275,11 +276,9 @@ function updateMetrics(event) {
 
 function updateSummary(event) {
   if (event.type === "start") {
-    activeProvider.textContent = event.provider;
     activeModel.textContent = event.model;
     activeStatus.textContent = "running";
     activeTools.textContent = "-";
-    providerStatus.textContent = event.provider === "groq" ? "Cloud API" : "Ollama local";
     return;
   }
   if (event.type === "tool") {
@@ -320,7 +319,7 @@ async function runLive(mode) {
     const response = await fetch("/api/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, query, provider: providerSelect.value })
+      body: JSON.stringify({ mode, query, provider: DEFAULT_PROVIDER })
     });
     if (!response.ok && !response.body) throw new Error("Live request failed");
 
@@ -370,10 +369,8 @@ async function loadHealth() {
     const response = await fetch("/api/health");
     const payload = await response.json();
     activeModel.textContent = payload.model || activeModel.textContent;
-    activeProvider.textContent = payload.provider || activeProvider.textContent;
-    providerStatus.textContent = payload.provider || "Cloud API";
   } catch {
-    providerStatus.textContent = "Backend offline";
+    activeModel.textContent = "Backend offline";
   }
 }
 

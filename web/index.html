@@ -13,7 +13,6 @@
           <p class="eyebrow">Lab 03 · Chatbot vs ReAct Agent</p>
           <h1>Live e-commerce chatbot</h1>
         </div>
-        <div class="status-pill" id="providerStatus">Cloud API</div>
       </header>
 
       <section class="workspace" aria-label="Live chatbot workspace">
@@ -29,17 +28,13 @@
           <div class="conversation-flow" id="conversationFlow" aria-live="polite">
             <article class="message assistant">
               <span>Agent</span>
-              <p>Chào bạn. Mình có thể kiểm tra catalog, coupon, shipping và tính tổng đơn hàng bằng tool evidence.</p>
+              <p>Chào bạn. Tôi là trợ lý AI hỗ trợ bạn mua, kiểm tra sản phẩm, chính sách của shop. </p>
             </article>
           </div>
 
           <div class="composer">
             <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
             <div class="composer-actions">
-              <select id="providerSelect" aria-label="Chọn provider">
-                <option value="groq" selected>Cloud API</option>
-                <option value="ollama">Ollama local</option>
-              </select>
               <button id="askAgent" type="button">Chạy ReAct Agent</button>
               <button id="askBaseline" type="button">Chạy Baseline</button>
             </div>
@@ -48,7 +43,6 @@
 
         <aside class="inspector-panel" aria-label="Processing flow and monitoring">
           <section class="summary-card">
-            <div><span>Provider</span><strong id="activeProvider">groq</strong></div>
             <div><span>Model</span><strong id="activeModel">llama-3.3-70b-versatile</strong></div>
             <div><span>Status</span><strong id="activeStatus">idle</strong></div>
             <div><span>Tool path</span><strong id="activeTools">-</strong></div>

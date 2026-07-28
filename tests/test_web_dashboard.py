@@ -12,7 +12,9 @@ def test_web_dashboard_contains_chat_and_processing_flow_sections():
     assert "Live e-commerce chatbot" in index
     assert "conversationFlow" in index
     assert "liveGraph" in index
-    assert "Cloud API" in index
+    assert "Cloud API" not in index
+    assert "providerSelect" not in index
+    assert "activeProvider" not in index
     assert "Live monitoring metrics" in index
     assert "LLM calls" in index
     assert "Token ratio" in index
