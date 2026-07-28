@@ -18,12 +18,14 @@ class ReActAgent:
         max_steps: int = 5,
         version: str = "v1",
         detect_repeated_action: bool = False,
+        evidence_gate: bool = False,
     ):
         self.llm = llm
         self.tools = tools
         self.max_steps = max_steps
         self.version = version
         self.detect_repeated_action = detect_repeated_action
+        self.evidence_gate = evidence_gate
         self.history = []
 
     def get_system_prompt(self) -> str:
@@ -74,6 +76,19 @@ class ReActAgent:
 
             final_answer = self.parse_final_answer(raw_output)
             if final_answer:
+                missing_tools = self._missing_required_tools(user_input, tool_path, trace)
+                if self.evidence_gate and missing_tools:
+                    observation = {
+                        "ok": False,
+                        "error": "premature_final_missing_evidence",
+                        "message": "Dynamic checkout answers require tool evidence before Final Answer.",
+                        "missing_tools": missing_tools,
+                    }
+                    trace.append({"step": step, "type": "observation", "observation": observation})
+                    prompt = self._append_observation(prompt, raw_output, observation)
+                    prompt_history.append(prompt)
+                    continue
+
                 result = {
                     "answer": final_answer,
                     "status": "final_answer",
@@ -209,3 +224,33 @@ class ReActAgent:
                 "tool": tool_name,
                 "arguments": arguments,
             }
+
+    def _missing_required_tools(
+        self,
+        user_input: str,
+        tool_path: List[str],
+        trace: List[Dict[str, Any]],
+    ) -> List[str]:
+        normalized = user_input.lower()
+        dynamic_item = any(term in normalized for term in ["iphone", "ipad", "macbook"])
+        checkout_total = any(term in normalized for term in ["total", "how much", "bao nhieu", "tong tien"])
+        if not dynamic_item or not checkout_total:
+            return []
+
+        out_of_stock = any(
+            step.get("type") == "tool"
+            and step.get("tool") == "check_stock"
+            and step.get("observation", {}).get("status") == "out_of_stock"
+            for step in trace
+        )
+
+        required = ["check_stock"]
+        if out_of_stock:
+            return [tool for tool in required if tool not in tool_path]
+
+        if any(term in normalized for term in ["winner", "legacy", "coupon", "code"]):
+            required.append("get_discount")
+        if any(term in normalized for term in ["ship", "shipping", "hanoi", "ha noi", "saigon"]):
+            required.append("calc_shipping")
+
+        return [tool for tool in required if tool not in tool_path]

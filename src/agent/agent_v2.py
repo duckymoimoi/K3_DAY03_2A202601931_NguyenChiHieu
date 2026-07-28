@@ -17,6 +17,7 @@ class ReActAgentV2(ReActAgent):
             max_steps=max_steps,
             version="v2",
             detect_repeated_action=True,
+            evidence_gate=True,
         )
 
     def get_system_prompt(self) -> str:
@@ -24,6 +25,7 @@ class ReActAgentV2(ReActAgent):
             super().get_system_prompt()
             + "\nV2 guardrail: if a tool call produced no new path forward, do not repeat the exact same Action. "
             "Use the observation to answer, ask for missing information, or stop safely.\n"
+            "V2 evidence gate: for checkout totals, Final Answer is allowed only after the required tool evidence exists.\n"
         )
 
     def parse_action(self, text: str) -> Optional[Tuple[str, Dict[str, Any]]]:

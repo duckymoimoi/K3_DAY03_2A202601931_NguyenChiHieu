@@ -63,9 +63,11 @@ This fork includes a deterministic e-commerce implementation for the lab guide:
 - Deterministic tools: `src/tools/tools.py`
 - ReAct Agent V1: `src/agent/agent.py`
 - ReAct Agent V2: `src/agent/agent_v2.py`
+- Ollama local provider: `src/core/ollama_provider.py`
 - Evaluation script: `scripts/run_lab_evaluation.py`
 - Evaluation artifacts: `artifacts/evaluation/`
 - Success and failure traces: `artifacts/traces/`
+- Live local Ollama smoke artifacts: `artifacts/live/`
 - Clean web UI dashboard: `web/index.html`
 
 Run tests:
@@ -85,3 +87,12 @@ Open the UI directly in a browser:
 ```text
 web/index.html
 ```
+
+Run a local Ollama smoke test if Ollama is already installed and has `qwen2.5:3b`:
+
+```bash
+python scripts/run_ollama_smoke.py
+python scripts/run_ollama_agent_smoke.py
+```
+
+The deterministic grading suite still uses `ScriptedLLM`; Ollama runs are live behavior checks and may vary by model.

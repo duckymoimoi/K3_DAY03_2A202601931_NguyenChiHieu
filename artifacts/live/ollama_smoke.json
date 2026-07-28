@@ -1,0 +1,27 @@
+{
+  "provider": "ollama",
+  "model": "qwen2.5:3b",
+  "runs_local": true,
+  "prompt": "Toi muon mua 2 iPhone, dung ma WINNER va giao toi Ha Noi. Tong tien la bao nhieu?",
+  "result": {
+    "answer": "The answer to your question needs evidence for the stock availability of the iPhones, their current price, whether the code WINNER is valid and applicable, the shipping fee to Ha Noi, and finally, the total cost including all these factors. I cannot provide a specific total without this information.",
+    "llm_calls": 1,
+    "tool_calls": 0,
+    "grounded": false,
+    "classification": "safe_fallback",
+    "missing_evidence": [
+      "stock_and_price",
+      "coupon_validity",
+      "shipping_fee",
+      "final_total"
+    ],
+    "usage": {
+      "prompt_tokens": 218,
+      "completion_tokens": 59,
+      "total_tokens": 277
+    },
+    "latency_ms": 3030,
+    "provider": "ollama"
+  },
+  "note": "Live local smoke test only. Deterministic grading artifacts still use ScriptedLLM."
+}

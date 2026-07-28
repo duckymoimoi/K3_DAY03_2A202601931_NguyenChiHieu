@@ -20,6 +20,8 @@ Artifacts:
 - `artifacts/traces/failure_trace_v1_repeated_action.json`
 - `artifacts/traces/recovery_trace_v2_repeated_action.json`
 - `artifacts/traces/rca_repeated_action.md`
+- `artifacts/live/ollama_smoke.json`
+- `artifacts/live/ollama_agent_smoke.json`
 
 ## 2. System Architecture & Tooling
 
@@ -52,7 +54,8 @@ flowchart LR
 ### 2.3 LLM Providers Used
 
 - **Deterministic evaluation**: `ScriptedLLM`
-- **Live-provider extension points**: OpenAI, Gemini, and local GGUF provider are kept in `src/core/`.
+- **Live local smoke test**: Ollama `qwen2.5:3b` through `src/core/ollama_provider.py`.
+- **Other live-provider extension points**: OpenAI, Gemini, and local GGUF provider are kept in `src/core/`.
 
 ## 3. Telemetry & Performance Dashboard
 
@@ -81,6 +84,17 @@ Summary from `artifacts/evaluation/summary.json`:
 - **Smallest V2 fix**: Stop safely when the exact same tool and arguments repeat without new evidence.
 - **Regression command**: `python -m pytest tests/test_agent_recovery.py -q`
 
+### Live Local Ollama Finding
+
+The local Ollama model `qwen2.5:3b` was run through the baseline and Agent V2 smoke scripts:
+
+```bash
+python scripts/run_ollama_smoke.py
+python scripts/run_ollama_agent_smoke.py
+```
+
+Baseline behaved correctly as a safe fallback: one LLM call, zero tools, and no grounded total. Agent V2 improved over a premature answer by enforcing an evidence gate, but the live model still produced imperfect tool format and missed the real `get_discount` call, so the agent stopped safely at `max_steps_exceeded`. This is recorded in `artifacts/live/ollama_agent_smoke.json` and shows why deterministic tests and live traces should be reported separately.
+
 ## 5. Ablation Studies & Experiments
 
 ### Chatbot vs Agent on Shared Cases
@@ -96,7 +110,7 @@ Summary from `artifacts/evaluation/summary.json`:
 ## 6. Production Readiness Review
 
 - **Security**: `.env`, logs, model files, and API keys are ignored.
-- **Guardrails**: Agent has `max_steps`; V2 adds repeated-action detection.
+- **Guardrails**: Agent has `max_steps`; V2 adds repeated-action detection and an evidence gate for checkout totals.
 - **Observability**: Agent returns trace steps and writes structured log events.
 - **UI artifact**: `web/index.html` displays evaluation metrics, tool path, and trace timeline.
 - **Next step**: Replace deterministic tools with authenticated APIs or database lookups, then add schema validation and human escalation for checkout actions.

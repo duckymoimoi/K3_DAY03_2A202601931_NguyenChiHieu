@@ -12,6 +12,7 @@
 - Implemented V2 repeated-action guardrail in `src/agent/agent_v2.py`.
 - Added unit tests for chatbot baseline, tools, ReAct loop, recovery, and web artifact.
 - Added deterministic evaluation script: `scripts/run_lab_evaluation.py`.
+- Added Ollama local provider and smoke scripts for `qwen2.5:3b`.
 - Built static UI dashboard in `web/`.
 
 ## II. Debugging Case Study
@@ -21,6 +22,7 @@
 - **First divergence**: Step 2 repeated `check_stock`.
 - **Diagnosis**: The loop had `max_steps`, but no repeated-action detector.
 - **Solution**: `ReActAgentV2` stops safely when the exact same tool and arguments repeat without new evidence.
+- **Extra live-model finding**: Ollama `qwen2.5:3b` initially tried to answer checkout totals without a valid tool path, so V2 now also has an evidence gate for dynamic checkout answers.
 - **Evidence**: `python -m pytest tests/test_agent_recovery.py -q`
 
 ## III. Personal Insights: Chatbot vs ReAct

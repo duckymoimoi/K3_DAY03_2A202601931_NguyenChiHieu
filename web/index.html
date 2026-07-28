@@ -102,7 +102,7 @@
       <section class="rca">
         <div>
           <h2>V1 → V2 failure fix</h2>
-          <p>Failed trace: V1 repeated <code>check_stock</code> until max steps. V2 adds one guardrail: stop when the exact same tool and args repeat without new evidence.</p>
+          <p>Failed trace: V1 repeated <code>check_stock</code> until max steps. V2 adds repeated-action detection and an evidence gate for dynamic checkout totals. Ollama smoke test uses local <code>qwen2.5:3b</code>.</p>
         </div>
         <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Open RCA artifact</a>
       </section>
