@@ -1,16 +1,16 @@
-# Group Report: Lab 3 - Production-Grade Agentic System
+# Báo cáo nhóm: Lab 3 - Chatbot vs ReAct Agent
 
-- **Team Name**: NguyenChiHieu Demo Team
-- **Team Members**: Nguyen Chi Hieu - 2A202601931
-- **Deployment Date**: 2026-07-28
+- **Tên nhóm**: NguyenChiHieu Demo Team
+- **Thành viên**: Nguyen Chi Hieu - 2A202601931
+- **Ngày hoàn thiện**: 2026-07-28
 
-## 1. Executive Summary
+## 1. Tóm tắt
 
-The system compares a one-call e-commerce chatbot baseline with a ReAct Agent V2 on the same 5 deterministic cases from the lab guide.
+Bài làm so sánh `Baseline Chatbot` một lần gọi LLM với `ReAct Agent V2` trên cùng 5 test cases e-commerce.
 
-- **Baseline success rate**: 40% on 5 cases.
-- **Agent V2 success rate**: 100% on 5 cases.
-- **Key outcome**: The chatbot is sufficient for static policy and working-hours questions, but it must safe-fallback for checkout totals because it has no evidence for stock, coupon validity, shipping, or final price.
+- **Tỉ lệ thành công của Baseline Chatbot**: 40% trên 5 cases.
+- **Tỉ lệ thành công của ReAct Agent V2**: 100% trên 5 cases deterministic.
+- **Kết luận chính**: Chatbot phù hợp với câu hỏi tĩnh như chính sách đổi trả hoặc giờ làm việc. Với câu hỏi checkout, chatbot không nên tự bịa tổng tiền vì thiếu bằng chứng về tồn kho, giá, coupon, shipping và tổng tiền.
 
 Artifacts:
 
@@ -23,94 +23,92 @@ Artifacts:
 - `artifacts/live/ollama_smoke.json`
 - `artifacts/live/ollama_agent_smoke.json`
 
-## 2. System Architecture & Tooling
+## 2. Kiến trúc hệ thống và Tool
 
-### 2.1 ReAct Loop Implementation
+### 2.1 ReAct loop
 
 Flowchart: `docs/hybrid_flowchart.mmd`
 
 ```mermaid
 flowchart LR
-    U[User query] --> B{Static or dynamic?}
-    B -->|Static| C[Baseline Chatbot]
-    C --> LLM[One LLM call]
-    B -->|Needs evidence| R[ReAct Agent V2]
+    U[User query] --> B{Tĩnh hay cần dữ liệu động?}
+    B -->|Tĩnh| C[Baseline Chatbot]
+    C --> LLM[Một LLM call]
+    B -->|Cần bằng chứng| R[ReAct Agent V2]
     R --> P[LLM Thought + Action]
     P --> X[Parse Action]
     X --> T[Tool Registry]
     T --> O[Observation JSON]
     O --> R
-    R --> FA[Final Answer or Safe Fallback]
+    R --> FA[Final Answer hoặc Safe Fallback]
 ```
 
-### 2.2 Tool Definitions
+### 2.2 Danh sách Tool
 
-| Tool Name | Input Format | Use Case |
+| Tool Name | Input Format | Mục đích |
 | :--- | :--- | :--- |
-| `check_stock` | `{"item_name": "iPhone"}` | Read deterministic catalog price, stock, weight, and status. |
-| `get_discount` | `{"coupon_code": "WINNER"}` | Validate coupon status and discount percent. |
-| `calc_shipping` | `{"weight": 0.8, "destination": "Hanoi"}` | Calculate deterministic shipping fee and delivery days. |
+| `check_stock` | `{"item_name": "iPhone"}` | Tra cứu giá, tồn kho, khối lượng và trạng thái sản phẩm. |
+| `get_discount` | `{"coupon_code": "WINNER"}` | Kiểm tra coupon còn hợp lệ hay không và phần trăm giảm giá. |
+| `calc_shipping` | `{"weight": 0.8, "destination": "Hanoi"}` | Tính phí shipping và số ngày giao hàng. |
 
-### 2.3 LLM Providers Used
+### 2.3 LLM Provider
 
-- **Deterministic evaluation**: `ScriptedLLM`
-- **Live local smoke test**: Ollama `qwen2.5:3b` through `src/core/ollama_provider.py`.
-- **Other live-provider extension points**: OpenAI, Gemini, and local GGUF provider are kept in `src/core/`.
+- **Evaluation deterministic**: `ScriptedLLM`
+- **Live local smoke test**: Ollama `qwen2.5:3b` qua `src/core/ollama_provider.py`
+- **Provider mở rộng**: OpenAI, Gemini và local GGUF được giữ trong `src/core/`
 
-## 3. Telemetry & Performance Dashboard
+## 3. Telemetry và kết quả đánh giá
 
-The evaluation script writes raw rows and summary metrics:
+Lệnh sinh kết quả:
 
 ```bash
 python scripts/run_lab_evaluation.py
 ```
 
-Summary from `artifacts/evaluation/summary.json`:
+Tóm tắt từ `artifacts/evaluation/summary.json`:
 
-| System | Success Rate | Safe Fallback Rate | Avg Steps | Avg Tool Calls |
+| System | Tỉ lệ thành công | Tỉ lệ Safe Fallback | Steps trung bình | Tool calls trung bình |
 | :--- | ---: | ---: | ---: | ---: |
 | Baseline Chatbot | 0.40 | 0.60 | 1.00 | 0.00 |
 | ReAct Agent V2 | 1.00 | 0.00 | 2.40 | 1.40 |
 
-## 4. Root Cause Analysis - Failure Trace
+## 4. Phân tích lỗi V1 và sửa ở V2
 
-### Case Study: Repeated Action
+### Case study: Repeated Action
 
 - **Input**: `I want to buy 2 iPhones using code WINNER and ship to Hanoi. Total?`
 - **Expected path**: `check_stock -> get_discount -> calc_shipping`
 - **Actual V1 path**: `check_stock -> check_stock -> check_stock`
-- **First divergence**: Step 2 repeated `check_stock` instead of moving to coupon validation.
-- **Root cause**: V1 had `max_steps` but no repeated-action detector.
-- **Smallest V2 fix**: Stop safely when the exact same tool and arguments repeat without new evidence.
+- **First divergence**: Bước 2 lặp lại `check_stock` thay vì chuyển sang kiểm tra coupon.
+- **Root cause**: V1 có `max_steps` nhưng chưa có repeated-action detector.
+- **Smallest V2 fix**: Dừng an toàn khi cùng một `Tool` và arguments bị lặp lại mà không tạo thêm bằng chứng mới.
 - **Regression command**: `python -m pytest tests/test_agent_recovery.py -q`
 
-### Live Local Ollama Finding
+### Live local Ollama finding
 
-The local Ollama model `qwen2.5:3b` was run through the baseline and Agent V2 smoke scripts:
+Đã chạy Ollama local `qwen2.5:3b` bằng hai script:
 
 ```bash
 python scripts/run_ollama_smoke.py
 python scripts/run_ollama_agent_smoke.py
 ```
 
-Baseline behaved correctly as a safe fallback: one LLM call, zero tools, and no grounded total. Agent V2 improved over a premature answer by enforcing an evidence gate, but the live model still produced imperfect tool format and missed the real `get_discount` call, so the agent stopped safely at `max_steps_exceeded`. This is recorded in `artifacts/live/ollama_agent_smoke.json` and shows why deterministic tests and live traces should be reported separately.
+Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate nên không chấp nhận `Final Answer` khi thiếu bằng chứng. Tuy nhiên model live vẫn tạo format chưa chuẩn và bỏ sót `get_discount`, nên agent dừng an toàn ở `max_steps_exceeded`. Kết quả này được lưu trong `artifacts/live/ollama_agent_smoke.json`.
 
-## 5. Ablation Studies & Experiments
+## 5. So sánh Chatbot và Agent
 
-### Chatbot vs Agent on Shared Cases
-
-| Case | Chatbot Result | Agent Result | Winner |
+| Case | Kết quả Chatbot | Kết quả Agent | Nhận xét |
 | :--- | :--- | :--- | :--- |
-| Return policy | Direct answer | Direct answer | Chatbot for cost/simplicity |
-| Working hours | Direct answer | Direct answer | Chatbot for cost/simplicity |
-| 2 iPhones + WINNER + Hanoi | Safe fallback | Grounded total with 3 tools | Agent |
-| MacBook + Saigon | Safe fallback | Stops after out-of-stock evidence | Agent |
-| iPad + LEGACY + Saigon | Safe fallback | Total without discount after coupon error | Agent |
+| Chính sách đổi trả | Trả lời trực tiếp | Trả lời trực tiếp | Chatbot đủ tốt và rẻ hơn |
+| Giờ làm việc | Trả lời trực tiếp | Trả lời trực tiếp | Chatbot đủ tốt và rẻ hơn |
+| 2 iPhones + WINNER + Hanoi | Safe fallback | Tổng tiền có bằng chứng từ 3 Tool | Agent tốt hơn |
+| MacBook + Saigon | Safe fallback | Dừng sau khi thấy hết hàng | Agent an toàn hơn |
+| iPad + LEGACY + Saigon | Safe fallback | Tính tổng không giảm giá vì coupon hết hạn | Agent tốt hơn |
 
-## 6. Production Readiness Review
+## 6. Mức sẵn sàng production
 
-- **Security**: `.env`, logs, model files, and API keys are ignored.
-- **Guardrails**: Agent has `max_steps`; V2 adds repeated-action detection and an evidence gate for checkout totals.
-- **Observability**: Agent returns trace steps and writes structured log events.
-- **UI artifact**: `web/index.html` displays evaluation metrics, tool path, and trace timeline.
-- **Next step**: Replace deterministic tools with authenticated APIs or database lookups, then add schema validation and human escalation for checkout actions.
+- **Bảo mật**: `.env`, logs, model files và API keys đã được ignore.
+- **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection và evidence gate.
+- **Observability**: Agent trả về trace và ghi structured logs.
+- **UI artifact**: `web/index.html` hiển thị metrics, Tool path và trace timeline.
+- **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.

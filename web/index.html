@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lab 03 Agent Flow Dashboard</title>
+    <title>Lab 03 - Bảng theo dõi ReAct Agent</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,9 +11,9 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Lab 03 · Chatbot vs ReAct Agent</p>
-          <h1>E-commerce Agent Trace Console</h1>
+          <h1>Bảng theo dõi luồng xử lý e-commerce</h1>
         </div>
-        <div class="status-pill">Deterministic demo</div>
+        <div class="status-pill">Demo deterministic</div>
       </header>
 
       <section class="metrics" aria-label="Evaluation metrics">
@@ -26,37 +26,37 @@
           <strong id="agentSuccess">100%</strong>
         </div>
         <div>
-          <span>Agent avg steps</span>
+          <span>Steps trung bình</span>
           <strong id="avgSteps">2.4</strong>
         </div>
         <div>
-          <span>Avg tool calls</span>
+          <span>Tool calls trung bình</span>
           <strong id="avgTools">1.4</strong>
         </div>
       </section>
 
       <section class="visual-flow" aria-label="System flow">
-        <img src="assets/agent-flow.svg" alt="Flow from user query to chatbot, ReAct agent, tool registry, observation and final answer" />
+        <img src="assets/agent-flow.svg" alt="Luồng từ User query tới chatbot, ReAct Agent, Tool Registry, Observation và Final Answer" />
       </section>
 
-      <section class="case-strip" aria-label="Case selector">
+      <section class="case-strip" aria-label="Chọn test case">
         <div class="section-heading">
-          <h2>5 shared test cases</h2>
-          <p>Chatbot và Agent nhận cùng input; chỉ Agent được gọi tool.</p>
+          <h2>5 test cases dùng chung</h2>
+          <p>Chatbot và Agent nhận cùng input; chỉ Agent được gọi Tool.</p>
         </div>
         <div id="caseButtons" class="case-buttons"></div>
       </section>
 
-      <section class="comparison" aria-label="System comparison">
+      <section class="comparison" aria-label="So sánh hệ thống">
         <article class="panel">
           <div class="panel-title">
             <span>Baseline Chatbot</span>
-            <b>1 LLM call · 0 tools</b>
+            <b>1 LLM call · 0 Tool</b>
           </div>
           <p id="baselineAnswer" class="answer"></p>
           <dl class="kv">
-            <div><dt>Status</dt><dd id="baselineStatus"></dd></div>
-            <div><dt>Missing evidence</dt><dd id="baselineEvidence"></dd></div>
+            <div><dt>Trạng thái</dt><dd id="baselineStatus"></dd></div>
+            <div><dt>Thiếu bằng chứng</dt><dd id="baselineEvidence"></dd></div>
           </dl>
         </article>
 
@@ -67,7 +67,7 @@
           </div>
           <p id="agentAnswer" class="answer"></p>
           <dl class="kv">
-            <div><dt>Status</dt><dd id="agentStatus"></dd></div>
+            <div><dt>Trạng thái</dt><dd id="agentStatus"></dd></div>
             <div><dt>Tool path</dt><dd id="toolPath"></dd></div>
           </dl>
         </article>
@@ -75,7 +75,7 @@
 
       <section class="trace-area" aria-label="Agent trace">
         <div class="section-heading">
-          <h2>Observable trace</h2>
+          <h2>Trace quan sát được</h2>
           <p>Mỗi Action sinh đúng một Observation do application chèn vào.</p>
         </div>
         <div id="traceList" class="trace-list"></div>
@@ -85,26 +85,26 @@
         <div class="tool-card">
           <span class="tool-dot blue"></span>
           <h3>check_stock</h3>
-          <p>Returns price, stock, weight_kg, status.</p>
+          <p>Trả về giá, tồn kho, weight_kg và status.</p>
         </div>
         <div class="tool-card">
           <span class="tool-dot green"></span>
           <h3>get_discount</h3>
-          <p>Validates WINNER or returns structured coupon error.</p>
+          <p>Kiểm tra WINNER hoặc trả structured coupon error.</p>
         </div>
         <div class="tool-card">
           <span class="tool-dot amber"></span>
           <h3>calc_shipping</h3>
-          <p>Calculates shipping cost and estimated days.</p>
+          <p>Tính shipping cost và estimated days.</p>
         </div>
       </section>
 
       <section class="rca">
         <div>
-          <h2>V1 → V2 failure fix</h2>
-          <p>Failed trace: V1 repeated <code>check_stock</code> until max steps. V2 adds repeated-action detection and an evidence gate for dynamic checkout totals. Ollama smoke test uses local <code>qwen2.5:3b</code>.</p>
+          <h2>Sửa lỗi từ V1 sang V2</h2>
+          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection và evidence gate cho câu hỏi checkout động. Ollama smoke test dùng local <code>qwen2.5:3b</code>.</p>
         </div>
-        <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Open RCA artifact</a>
+        <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Mở RCA artifact</a>
       </section>
     </main>
     <script src="app.js"></script>

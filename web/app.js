@@ -2,105 +2,105 @@ const cases = [
   {
     id: "case_1_return_policy",
     label: "Case 1",
-    title: "Return policy",
-    query: "What is your return policy?",
+    title: "Chính sách đổi trả",
+    query: "Chính sách đổi trả là gì?",
     baseline: {
       status: "direct_answer",
-      missing: "None",
-      answer: "You can return eligible products within 7 days with the receipt."
+      missing: "Không thiếu",
+      answer: "Bạn có thể đổi trả sản phẩm đủ điều kiện trong 7 ngày nếu còn hóa đơn."
     },
     agent: {
       status: "final_answer",
-      toolPath: "None",
-      answer: "You can return eligible products within 7 days with the receipt.",
-      trace: [{ type: "llm", step: 1, content: "Final Answer: You can return eligible products within 7 days with the receipt." }]
+      toolPath: "Không gọi Tool",
+      answer: "Bạn có thể đổi trả sản phẩm đủ điều kiện trong 7 ngày nếu còn hóa đơn.",
+      trace: [{ type: "llm", step: 1, content: "Final Answer: Bạn có thể đổi trả sản phẩm đủ điều kiện trong 7 ngày nếu còn hóa đơn." }]
     }
   },
   {
     id: "case_2_working_hours",
     label: "Case 2",
-    title: "Working hours",
-    query: "What are your working hours?",
+    title: "Giờ làm việc",
+    query: "Cửa hàng làm việc lúc nào?",
     baseline: {
       status: "direct_answer",
-      missing: "None",
-      answer: "Our demo store works from 8:00 to 21:00 every day."
+      missing: "Không thiếu",
+      answer: "Cửa hàng demo làm việc từ 8:00 đến 21:00 hằng ngày."
     },
     agent: {
       status: "final_answer",
-      toolPath: "None",
-      answer: "Our demo store works from 8:00 to 21:00 every day.",
-      trace: [{ type: "llm", step: 1, content: "Final Answer: Our demo store works from 8:00 to 21:00 every day." }]
+      toolPath: "Không gọi Tool",
+      answer: "Cửa hàng demo làm việc từ 8:00 đến 21:00 hằng ngày.",
+      trace: [{ type: "llm", step: 1, content: "Final Answer: Cửa hàng demo làm việc từ 8:00 đến 21:00 hằng ngày." }]
     }
   },
   {
     id: "case_3_iphone_winner_hanoi",
     label: "Case 3",
-    title: "2 iPhones + WINNER + Hanoi",
-    query: "I want to buy 2 iPhones using code 'WINNER' and ship to Hanoi. The package weight is 0.8 kg. Total?",
+    title: "2 iPhone + WINNER + Hanoi",
+    query: "Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hanoi. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?",
     baseline: {
       status: "safe_fallback",
       missing: "stock_and_price, coupon_validity, shipping_fee, final_total",
-      answer: "I cannot calculate a grounded total without stock, price, coupon, and shipping evidence."
+      answer: "Tôi không thể tính tổng tiền có căn cứ nếu chưa có bằng chứng về tồn kho, giá, coupon và shipping."
     },
     agent: {
       status: "final_answer",
       toolPath: "check_stock -> get_discount -> calc_shipping",
-      answer: "Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
+      answer: "Tổng tiền = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
       trace: [
-        { type: "llm", step: 1, content: 'Thought: Need stock and price.\nAction: check_stock({"item_name": "iPhone"})' },
+        { type: "llm", step: 1, content: 'Thought: Cần kiểm tra tồn kho và giá.\nAction: check_stock({"item_name": "iPhone"})' },
         { type: "tool", step: 1, tool: "check_stock", observation: { ok: true, item_name: "iPhone", price: 25000000, stock: 15, weight_kg: 0.4, status: "in_stock" } },
-        { type: "llm", step: 2, content: 'Thought: Need coupon evidence.\nAction: get_discount({"coupon_code": "WINNER"})' },
+        { type: "llm", step: 2, content: 'Thought: Cần bằng chứng coupon.\nAction: get_discount({"coupon_code": "WINNER"})' },
         { type: "tool", step: 2, tool: "get_discount", observation: { ok: true, coupon_code: "WINNER", valid: true, discount_percent: 10 } },
-        { type: "llm", step: 3, content: 'Thought: Need shipping fee.\nAction: calc_shipping({"weight": 0.8, "destination": "Hanoi"})' },
+        { type: "llm", step: 3, content: 'Thought: Cần tính phí shipping.\nAction: calc_shipping({"weight": 0.8, "destination": "Hanoi"})' },
         { type: "tool", step: 3, tool: "calc_shipping", observation: { ok: true, destination: "Hanoi", weight: 0.8, shipping_cost: 38000, estimated_days: 1 } },
-        { type: "llm", step: 4, content: "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND." }
+        { type: "llm", step: 4, content: "Final Answer: Tổng tiền = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND." }
       ]
     }
   },
   {
     id: "case_4_macbook_out_of_stock",
     label: "Case 4",
-    title: "MacBook out of stock",
-    query: "Can I buy 1 MacBook and ship to Saigon? How much?",
+    title: "MacBook hết hàng",
+    query: "Tôi có thể mua 1 MacBook và ship tới Saigon không? Giá bao nhiêu?",
     baseline: {
       status: "safe_fallback",
       missing: "stock_and_price, shipping_fee, final_total",
-      answer: "I cannot verify MacBook stock or a grounded total without catalog and shipping tools."
+      answer: "Tôi không thể xác minh tồn kho MacBook hoặc tổng tiền nếu không có catalog và shipping Tool."
     },
     agent: {
       status: "final_answer",
       toolPath: "check_stock",
-      answer: "MacBook is out of stock, so I cannot claim the purchase can be completed.",
+      answer: "MacBook đang hết hàng, nên tôi không thể khẳng định đơn mua có thể hoàn tất.",
       trace: [
-        { type: "llm", step: 1, content: 'Thought: Need stock before pricing checkout.\nAction: check_stock({"item_name": "MacBook"})' },
+        { type: "llm", step: 1, content: 'Thought: Cần kiểm tra tồn kho trước khi tính checkout.\nAction: check_stock({"item_name": "MacBook"})' },
         { type: "tool", step: 1, tool: "check_stock", observation: { ok: true, item_name: "MacBook", price: 35000000, stock: 0, weight_kg: 2.0, status: "out_of_stock" } },
-        { type: "llm", step: 2, content: "Final Answer: MacBook is out of stock, so I cannot claim the purchase can be completed." }
+        { type: "llm", step: 2, content: "Final Answer: MacBook đang hết hàng, nên tôi không thể khẳng định đơn mua có thể hoàn tất." }
       ]
     }
   },
   {
     id: "case_5_ipad_legacy_saigon",
     label: "Case 5",
-    title: "iPad + expired LEGACY",
-    query: "I want to buy 1 iPad using code 'LEGACY' and ship to Saigon. The package weight is 0.5 kg. How much?",
+    title: "iPad + LEGACY hết hạn",
+    query: "Tôi muốn mua 1 iPad, dùng mã LEGACY và ship tới Saigon. Package weight là 0.5 kg. Bao nhiêu tiền?",
     baseline: {
       status: "safe_fallback",
       missing: "stock_and_price, coupon_validity, shipping_fee, final_total",
-      answer: "I cannot calculate a grounded total without checking price, coupon validity, and shipping."
+      answer: "Tôi không thể tính tổng tiền có căn cứ nếu chưa kiểm tra giá, coupon validity và shipping."
     },
     agent: {
       status: "final_answer",
       toolPath: "check_stock -> get_discount -> calc_shipping",
-      answer: "LEGACY is expired, so no discount applies. Total = 18,000,000 + 45,000 = 18,045,000 VND.",
+      answer: "LEGACY đã hết hạn nên không áp dụng giảm giá. Tổng tiền = 18,000,000 + 45,000 = 18,045,000 VND.",
       trace: [
-        { type: "llm", step: 1, content: 'Thought: Need item stock and price.\nAction: check_stock({"item_name": "iPad"})' },
+        { type: "llm", step: 1, content: 'Thought: Cần tồn kho và giá sản phẩm.\nAction: check_stock({"item_name": "iPad"})' },
         { type: "tool", step: 1, tool: "check_stock", observation: { ok: true, item_name: "iPad", price: 18000000, stock: 8, weight_kg: 0.5, status: "in_stock" } },
-        { type: "llm", step: 2, content: 'Thought: Need coupon validity.\nAction: get_discount({"coupon_code": "LEGACY"})' },
+        { type: "llm", step: 2, content: 'Thought: Cần kiểm tra coupon validity.\nAction: get_discount({"coupon_code": "LEGACY"})' },
         { type: "tool", step: 2, tool: "get_discount", observation: { ok: false, error: "coupon_expired", coupon_code: "LEGACY", valid: false, discount_percent: 0 } },
-        { type: "llm", step: 3, content: 'Thought: Coupon is expired; need shipping before final total.\nAction: calc_shipping({"weight": 0.5, "destination": "Saigon"})' },
+        { type: "llm", step: 3, content: 'Thought: Coupon hết hạn; cần shipping trước khi tính tổng.\nAction: calc_shipping({"weight": 0.5, "destination": "Saigon"})' },
         { type: "tool", step: 3, tool: "calc_shipping", observation: { ok: true, destination: "Saigon", weight: 0.5, shipping_cost: 45000, estimated_days: 2 } },
-        { type: "llm", step: 4, content: "Final Answer: LEGACY is expired, so no discount applies. Total = 18,000,000 + 45,000 = 18,045,000 VND." }
+        { type: "llm", step: 4, content: "Final Answer: LEGACY đã hết hạn nên không áp dụng giảm giá. Tổng tiền = 18,000,000 + 45,000 = 18,045,000 VND." }
       ]
     }
   }

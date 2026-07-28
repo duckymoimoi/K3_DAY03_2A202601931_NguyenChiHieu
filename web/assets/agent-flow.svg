@@ -1,18 +1,18 @@
 <svg width="960" height="220" viewBox="0 0 960 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Chatbot and ReAct Agent Flow</title>
-  <desc id="desc">A visual flow comparing one-call chatbot and ReAct agent with tool observations.</desc>
+  <title id="title">Luồng Chatbot và ReAct Agent</title>
+  <desc id="desc">Sơ đồ so sánh chatbot một LLM call và ReAct Agent có Tool Observation.</desc>
   <rect width="960" height="220" rx="8" fill="#F6F8FB"/>
   <path d="M52 72H892" stroke="#CBD5E1" stroke-width="2"/>
   <path d="M310 72C356 72 356 150 402 150H808" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="8 8"/>
   <g>
     <rect x="34" y="42" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#94A3B8"/>
     <text x="93" y="67" text-anchor="middle" font-size="13" font-family="Arial" fill="#0F172A" font-weight="700">User Query</text>
-    <text x="93" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#64748B">same 5 cases</text>
+    <text x="93" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#64748B">5 case chung</text>
   </g>
   <g>
     <rect x="196" y="42" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#60A5FA"/>
     <text x="255" y="67" text-anchor="middle" font-size="13" font-family="Arial" fill="#0F172A" font-weight="700">Baseline</text>
-    <text x="255" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#2563EB">one LLM call</text>
+    <text x="255" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#2563EB">1 LLM call</text>
   </g>
   <g>
     <rect x="358" y="42" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#34D399"/>
@@ -22,17 +22,17 @@
   <g>
     <rect x="520" y="42" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#F59E0B"/>
     <text x="579" y="67" text-anchor="middle" font-size="13" font-family="Arial" fill="#0F172A" font-weight="700">Tool Registry</text>
-    <text x="579" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#B45309">3 deterministic tools</text>
+    <text x="579" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#B45309">3 Tool cố định</text>
   </g>
   <g>
     <rect x="682" y="42" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#A78BFA"/>
     <text x="741" y="67" text-anchor="middle" font-size="13" font-family="Arial" fill="#0F172A" font-weight="700">Observation</text>
-    <text x="741" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#7C3AED">JSON evidence</text>
+    <text x="741" y="86" text-anchor="middle" font-size="11" font-family="Arial" fill="#7C3AED">bằng chứng JSON</text>
   </g>
   <g>
     <rect x="808" y="120" width="118" height="60" rx="8" fill="#FFFFFF" stroke="#22C55E"/>
     <text x="867" y="145" text-anchor="middle" font-size="13" font-family="Arial" fill="#0F172A" font-weight="700">Final Answer</text>
-    <text x="867" y="164" text-anchor="middle" font-size="11" font-family="Arial" fill="#16A34A">grounded total</text>
+    <text x="867" y="164" text-anchor="middle" font-size="11" font-family="Arial" fill="#16A34A">có bằng chứng</text>
   </g>
   <path d="M152 72H194" stroke="#64748B" stroke-width="2"/>
   <path d="M314 72H356" stroke="#64748B" stroke-width="2"/>

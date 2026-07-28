@@ -1,82 +1,65 @@
-# Group Report: Lab 3 - Production-Grade Agentic System
+# Báo cáo nhóm: Lab 3 - Chatbot vs ReAct Agent
 
-- **Team Name**: [Name]
-- **Team Members**: [Member 1, Member 2, ...]
-- **Deployment Date**: [YYYY-MM-DD]
+- **Tên nhóm**: [Tên nhóm]
+- **Thành viên**: [Thành viên 1, Thành viên 2, ...]
+- **Ngày hoàn thiện**: [YYYY-MM-DD]
 
----
+## 1. Tóm tắt
 
-## 1. Executive Summary
+Tóm tắt mục tiêu của Agent, tỉ lệ thành công, và điểm khác biệt so với Baseline Chatbot.
 
-*Brief overview of the agent's goal and success rate compared to the baseline chatbot.*
+- **Tỉ lệ thành công**: [ví dụ: 85% trên 20 test cases]
+- **Kết quả chính**: [ví dụ: Agent giải được nhiều câu hỏi multi-step hơn nhờ dùng Search Tool]
 
-- **Success Rate**: [e.g., 85% on 20 test cases]
-- **Key Outcome**: [e.g., "Our agent solved 40% more multi-step queries than the chatbot baseline by correctly utilizing the Search tool."]
+## 2. Kiến trúc hệ thống và Tool
 
----
+### 2.1 ReAct loop
 
-## 2. System Architecture & Tooling
+Mô tả hoặc vẽ diagram cho luồng `Thought -> Action -> Observation`.
 
-### 2.1 ReAct Loop Implementation
-*Diagram or description of the Thought-Action-Observation loop.*
+### 2.2 Danh sách Tool
 
-### 2.2 Tool Definitions (Inventory)
-| Tool Name | Input Format | Use Case |
+| Tool Name | Input Format | Mục đích |
 | :--- | :--- | :--- |
-| `calc_tax` | `json` | Calculate VAT based on country code. |
-| `search_api` | `string` | Retrieve real-time information from Google Search. |
+| `calc_tax` | `json` | Tính VAT theo country code. |
+| `search_api` | `string` | Lấy thông tin cập nhật từ Search API. |
 
-### 2.3 LLM Providers Used
-- **Primary**: [e.g., GPT-4o]
-- **Secondary (Backup)**: [e.g., Gemini 1.5 Flash]
+### 2.3 LLM Provider
 
----
+- **Primary**: [ví dụ: GPT-4o]
+- **Backup**: [ví dụ: Gemini 1.5 Flash]
 
-## 3. Telemetry & Performance Dashboard
+## 3. Telemetry và hiệu năng
 
-*Analyze the industry metrics collected during the final test run.*
+Phân tích metrics thu được trong lần chạy cuối.
 
-- **Average Latency (P50)**: [e.g., 1200ms]
-- **Max Latency (P99)**: [e.g., 4500ms]
-- **Average Tokens per Task**: [e.g., 350 tokens]
-- **Total Cost of Test Suite**: [e.g., $0.05]
+- **Average Latency**: [ví dụ: 1200ms]
+- **Average Tokens per Task**: [ví dụ: 350 tokens]
+- **Total Cost**: [ví dụ: $0.05]
 
----
+## 4. Root Cause Analysis
 
-## 4. Root Cause Analysis (RCA) - Failure Traces
+Phân tích một lỗi thật của Agent.
 
-*Deep dive into why the agent failed.*
+### Case study: [ví dụ: Hallucinated Argument]
 
-### Case Study: [e.g., Hallucinated Argument]
-- **Input**: "How much is the tax for 500 in Vietnam?"
-- **Observation**: Agent called `calc_tax(amount=500, region="Asia")` while the tool only accepts 2-letter country codes.
-- **Root Cause**: The system prompt lacked enough `Few-Shot` examples for the tool's strict argument format.
+- **Input**: [câu hỏi]
+- **Observation**: [Agent đã làm gì]
+- **Root Cause**: [Prompt, parser, Tool spec, dữ liệu, hoặc loop]
+- **Smallest Fix**: [thay đổi nhỏ nhất]
+- **Regression Test**: [lệnh test]
 
----
+## 5. Ablation và so sánh
 
-## 5. Ablation Studies & Experiments
-
-### Experiment 1: Prompt v1 vs Prompt v2
-- **Diff**: [e.g., Adding "Always double check the tool arguments before calling".]
-- **Result**: Reduced invalid tool call errors by [e.g., 30%].
-
-### Experiment 2 (Bonus): Chatbot vs Agent
-| Case | Chatbot Result | Agent Result | Winner |
+| Case | Chatbot Result | Agent Result | Nhận xét |
 | :--- | :--- | :--- | :--- |
-| Simple Q | Correct | Correct | Draw |
-| Multi-step | Hallucinated | Correct | **Agent** |
+| Simple Q&A | Correct | Correct | Chatbot đủ tốt |
+| Multi-step | Hallucinated | Correct | Agent tốt hơn |
 
----
+## 6. Mức sẵn sàng production
 
-## 6. Production Readiness Review
+- **Bảo mật**: [ví dụ: kiểm tra input và không commit API key]
+- **Guardrails**: [ví dụ: max_steps, repeated-action detector]
+- **Scaling**: [ví dụ: chuyển sang LangGraph nếu workflow phức tạp]
 
-*Considerations for taking this system to a real-world environment.*
-
-- **Security**: [e.g., Input sanitization for tool arguments.]
-- **Guardrails**: [e.g., Max 5 loops to prevent infinite billing cost.]
-- **Scaling**: [e.g., Transition to LangGraph for more complex branching.]
-
----
-
-> [!NOTE]
-> Submit this report by renaming it to `GROUP_REPORT_[TEAM_NAME].md` and placing it in this folder.
+> Nộp file này bằng cách đổi tên thành `GROUP_REPORT_[TEAM_NAME].md`.

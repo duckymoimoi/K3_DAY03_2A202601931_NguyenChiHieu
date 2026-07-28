@@ -1,40 +1,40 @@
-# Individual Report: Lab 3 - Chatbot vs ReAct Agent
+# Báo cáo cá nhân: Lab 3 - Chatbot vs ReAct Agent
 
-- **Student Name**: Nguyen Chi Hieu
-- **Student ID**: 2A202601931
-- **Date**: 2026-07-28
+- **Họ tên**: Nguyen Chi Hieu
+- **Mã sinh viên**: 2A202601931
+- **Ngày hoàn thiện**: 2026-07-28
 
-## I. Technical Contribution
+## I. Đóng góp kỹ thuật
 
-- Implemented baseline chatbot in `src/chatbot/chatbot.py`.
-- Implemented deterministic e-commerce tools in `src/tools/tools.py`.
-- Implemented ReAct V1 loop in `src/agent/agent.py`.
-- Implemented V2 repeated-action guardrail in `src/agent/agent_v2.py`.
-- Added unit tests for chatbot baseline, tools, ReAct loop, recovery, and web artifact.
-- Added deterministic evaluation script: `scripts/run_lab_evaluation.py`.
-- Added Ollama local provider and smoke scripts for `qwen2.5:3b`.
-- Built static UI dashboard in `web/`.
+- Implement `Baseline Chatbot` trong `src/chatbot/chatbot.py`.
+- Implement các Tool deterministic trong `src/tools/tools.py`.
+- Implement `ReAct Agent V1` trong `src/agent/agent.py`.
+- Implement `ReAct Agent V2` với repeated-action guardrail trong `src/agent/agent_v2.py`.
+- Thêm unit tests cho chatbot baseline, Tool, ReAct loop, recovery và web UI.
+- Thêm script deterministic evaluation: `scripts/run_lab_evaluation.py`.
+- Thêm `OllamaProvider` và smoke scripts cho model local `qwen2.5:3b`.
+- Xây web UI tĩnh trong `web/`.
 
-## II. Debugging Case Study
+## II. Debugging case study
 
-- **Problem**: Agent V1 repeated `check_stock({"item_name": "iPhone"})` instead of moving to coupon validation.
-- **Log / Trace Source**: `artifacts/traces/failure_trace_v1_repeated_action.json`
-- **First divergence**: Step 2 repeated `check_stock`.
-- **Diagnosis**: The loop had `max_steps`, but no repeated-action detector.
-- **Solution**: `ReActAgentV2` stops safely when the exact same tool and arguments repeat without new evidence.
-- **Extra live-model finding**: Ollama `qwen2.5:3b` initially tried to answer checkout totals without a valid tool path, so V2 now also has an evidence gate for dynamic checkout answers.
-- **Evidence**: `python -m pytest tests/test_agent_recovery.py -q`
+- **Vấn đề**: Agent V1 lặp lại `check_stock({"item_name": "iPhone"})` thay vì chuyển sang kiểm tra coupon.
+- **Nguồn log / trace**: `artifacts/traces/failure_trace_v1_repeated_action.json`
+- **First divergence**: Bước 2 lặp lại `check_stock`.
+- **Chẩn đoán**: Loop có `max_steps`, nhưng chưa có repeated-action detector.
+- **Cách sửa**: `ReActAgentV2` dừng an toàn khi cùng một Tool và arguments bị lặp lại mà không có bằng chứng mới.
+- **Phát hiện từ live model**: Ollama `qwen2.5:3b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate cho câu hỏi checkout.
+- **Bằng chứng kiểm thử**: `python -m pytest tests/test_agent_recovery.py -q`
 
-## III. Personal Insights: Chatbot vs ReAct
+## III. Bài học cá nhân: Chatbot vs ReAct Agent
 
-The chatbot is cheaper and faster for static questions such as return policy and working hours because no external evidence is needed. For checkout questions, the chatbot should not invent a total because price, stock, coupon status, and shipping are dynamic facts.
+Chatbot rẻ và nhanh hơn cho câu hỏi tĩnh như chính sách đổi trả hoặc giờ làm việc, vì không cần dữ liệu động. Với câu hỏi checkout, chatbot không nên tự bịa tổng tiền vì giá, tồn kho, coupon và shipping đều là dữ liệu cần bằng chứng.
 
-The ReAct agent is more expensive because it uses multiple steps and tool calls, but it can ground the final answer in observations. The strongest insight from the 5-case evaluation is that the agent is not always better; it is better when the task requires action, validation, or fresh evidence.
+ReAct Agent tốn nhiều bước hơn vì phải gọi Tool, nhưng đổi lại câu trả lời có `Observation` làm bằng chứng. Kết luận quan trọng nhất là Agent không phải lúc nào cũng tốt hơn; Agent đáng dùng khi bài toán cần hành động, kiểm chứng hoặc dữ liệu mới.
 
-## IV. Future Improvements
+## IV. Cải tiến tương lai
 
-- Add Pydantic schemas for Action arguments before tool execution.
-- Add an authenticated inventory and coupon database instead of hardcoded lab data.
-- Add human confirmation before any real purchase or payment action.
-- Add cost and latency monitoring per tool and per LLM call.
-- Use a graph-based framework if the checkout workflow gains more branches.
+- Thêm Pydantic schema cho arguments trước khi gọi Tool.
+- Dùng inventory database và coupon API thật thay vì dữ liệu hardcode.
+- Thêm human confirmation trước khi thực hiện purchase/payment.
+- Theo dõi cost và latency cho từng LLM call và Tool call.
+- Dùng graph-based framework nếu workflow checkout có nhiều nhánh phức tạp.

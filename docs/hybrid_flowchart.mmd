@@ -1,9 +1,9 @@
 flowchart LR
-    U[User query] --> B{Static or dynamic?}
-    B -->|Static policy / hours| C[Baseline Chatbot]
-    C --> LLM[One LLM call]
-    LLM --> A1[Direct answer]
-    B -->|Needs live evidence| R[ReAct Agent V2]
+    U[User query] --> B{Câu hỏi tĩnh hay cần dữ liệu động?}
+    B -->|Câu hỏi tĩnh| C[Baseline Chatbot]
+    C --> LLM[Một LLM call]
+    LLM --> A1[Trả lời trực tiếp]
+    B -->|Cần bằng chứng| R[ReAct Agent V2]
     R --> P[LLM Thought + Action]
     P --> X[Parse Action]
     X --> T{Tool Registry}
@@ -14,5 +14,5 @@ flowchart LR
     GD --> O
     SH --> O
     O --> R
-    R -->|Enough evidence| FA[Final Answer]
-    R -->|Repeated action / max steps| SF[Safe fallback]
+    R -->|Đủ bằng chứng| FA[Final Answer]
+    R -->|Lặp Action / quá max_steps| SF[Safe Fallback]
