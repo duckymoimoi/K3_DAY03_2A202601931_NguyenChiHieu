@@ -84,6 +84,41 @@
   {
     "step": 4,
     "type": "llm",
+    "content": "Thought: Need final checkout total.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 20,
+      "total_tokens": 40
+    },
+    "latency_ms": 1,
+    "provider": "scripted"
+  },
+  {
+    "step": 4,
+    "type": "tool",
+    "tool": "calc_total",
+    "arguments": {
+      "item_quantity": 2,
+      "price_per_item": 25000000,
+      "discount_percent": 10,
+      "shipping_cost": 38000
+    },
+    "observation": {
+      "ok": true,
+      "item_quantity": 2,
+      "price_per_item": 25000000,
+      "subtotal": 50000000,
+      "discount_percent": 10.0,
+      "discount_amount": 5000000,
+      "shipping_cost": 38000,
+      "total": 45038000,
+      "currency": "VND",
+      "formula": "(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost"
+    }
+  },
+  {
+    "step": 5,
+    "type": "llm",
     "content": "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
     "usage": {
       "prompt_tokens": 20,

@@ -15,7 +15,7 @@
 - Thêm `OllamaProvider` và smoke scripts cho model local `qwen3.5:4b`.
 - Thêm `GroqProvider` để chạy live demo nhanh qua API OpenAI-compatible.
 - Thêm live system demo `scripts/run_live_demo.py`, monitoring artifact và ablation artifact.
-- Xây web UI tĩnh trong `web/`.
+- Xây web UI live trong `web/`: graph cập nhật realtime qua `/api/chat/stream`, có hover để xem chi tiết từng LLM/Tool event.
 
 ## II. Debugging case study
 
@@ -24,7 +24,7 @@
 - **First divergence**: Bước 2 lặp lại `check_stock`.
 - **Chẩn đoán**: Loop có `max_steps`, nhưng chưa có repeated-action detector.
 - **Cách sửa**: `ReActAgentV2` dừng an toàn khi cùng một Tool và arguments bị lặp lại mà không có bằng chứng mới.
-- **Phát hiện từ live model**: Ollama `qwen3.5:4b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate và `calc_total` prerequisite guardrail cho câu hỏi checkout.
+- **Phát hiện từ live model**: model live từng cố trả lời tổng tiền khi Tool path chưa hợp lệ hoặc lặp `calc_total`, nên V2 có thêm evidence gate, `calc_total` prerequisite guardrail và cơ chế chốt answer từ Observation `calc_total` đã grounded.
 - **Bằng chứng kiểm thử**: `python -m pytest tests/test_agent_recovery.py -q`
 
 ## III. Bằng chứng kỹ thuật cá nhân

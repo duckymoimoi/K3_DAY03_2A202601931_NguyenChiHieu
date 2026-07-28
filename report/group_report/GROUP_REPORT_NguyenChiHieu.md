@@ -15,6 +15,7 @@ Bài làm so sánh `Baseline Chatbot` một lần gọi LLM với `ReAct Agent V
 Artifacts:
 
 - `artifacts/evaluation/raw_results.json`
+- `artifacts/evaluation/raw_result_table.csv`
 - `artifacts/evaluation/summary.json`
 - `artifacts/traces/success_trace_case_3.json`
 - `artifacts/traces/failure_trace_v1_repeated_action.json`
@@ -73,17 +74,21 @@ python scripts/run_lab_evaluation.py
 
 Tóm tắt từ `artifacts/evaluation/summary.json`:
 
-| System | Tỉ lệ thành công | Tỉ lệ Safe Fallback | Steps trung bình | Tool calls trung bình |
-| :--- | ---: | ---: | ---: | ---: |
-| Baseline Chatbot | 0.40 | 0.60 | 1.00 | 0.00 |
-| ReAct Agent V2 | 1.00 | 0.00 | 2.40 | 1.40 |
+| System | Success rate | Safe fallback | Parser error | Hallucinated tool | Recovery | Steps TB | Tool calls TB | Median/max latency | Avg tokens |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: |
+| Baseline Chatbot | 0.40 | 0.60 | 0.00 | 0.00 | 1.00 | 1.00 | 0.00 | 1/1 ms | 40.00 |
+| ReAct Agent V2 | 1.00 | 0.00 | 0.00 | 0.00 | 1.00 | 2.80 | 1.80 | 1/1 ms | 40.00 |
+
+`artifacts/evaluation/raw_result_table.csv` lưu bảng raw theo rubric 0-2 cho từng case với các cột: factual, grounding, tool_selection, safety, completeness, termination, tool_path, status, steps và tool_calls.
+
+Lưu ý: metrics deterministic dùng `ScriptedLLM`, nên latency/tokens chỉ là giá trị tái lập để kiểm tra orchestration. Metrics live API được ghi riêng trong `artifacts/monitoring/live_monitoring_summary.json`; không trộn với bảng deterministic.
 
 ## 4. Phân tích lỗi V1 và sửa ở V2
 
 ### Case study: Repeated Action
 
 - **Input**: `I want to buy 2 iPhones using code WINNER and ship to Hanoi. Total?`
-- **Expected path**: `check_stock -> get_discount -> calc_shipping`
+- **Expected path**: `check_stock -> get_discount -> calc_shipping -> calc_total`
 - **Actual V1 path**: `check_stock -> check_stock -> check_stock`
 - **First divergence**: Bước 2 lặp lại `check_stock` thay vì chuyển sang kiểm tra coupon.
 - **Root cause**: V1 có `max_steps` nhưng chưa có repeated-action detector.
@@ -127,4 +132,20 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 - **Observability**: Agent trả về trace, ghi structured logs và có monitoring artifact.
 - **UI artifact**: `web/index.html` hiển thị metrics, Tool path, trace timeline và form hỏi live Agent qua `scripts/serve_live_web.py`.
 - **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.
+
+## 8. Consistency checklist trước khi nộp
+
+| Checklist | Trạng thái | Bằng chứng / command |
+| :--- | :--- | :--- |
+| Tool inventory trong report khớp registry thật | Đạt | `src/tools/tools.py`, mục 2.2 |
+| Flowchart chỉ chứa Tool tồn tại | Đạt | `docs/hybrid_flowchart.mmd` |
+| Provider/model khớp config và trace | Đạt | `GroqProvider`, `artifacts/live/live_system_demo.json` |
+| Số test case khớp script/artifact | Đạt | `python scripts/run_lab_evaluation.py` |
+| Success rate có công thức + raw outcomes | Đạt | `artifacts/evaluation/summary.json`, `raw_result_table.csv` |
+| Chatbot tool calls đúng baseline protocol | Đạt | Baseline `tool_calls=0` trong raw results |
+| Failed trace có first divergence, root cause, fix và regression test | Đạt | `artifacts/traces/rca_repeated_action.md` |
+| Metrics không phải số ước lượng | Đạt | deterministic và live được ghi riêng |
+| Không tuyên bố side effect thật khi Tool là mock | Đạt | Report chỉ nói demo checkout, chưa purchase/payment thật |
+| Trace đã loại secret/PII | Đạt | Không ghi API key; `.env` và `logs/` trong `.gitignore` |
+| Mỗi claim quan trọng có command tái tạo | Đạt | `python -m pytest -q`, `python scripts/run_live_demo.py`, `python scripts/generate_evidence_artifacts.py` |
 

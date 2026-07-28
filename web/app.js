@@ -45,7 +45,7 @@ const cases = [
     },
     agent: {
       status: "final_answer",
-      toolPath: "check_stock -> get_discount -> calc_shipping",
+      toolPath: "check_stock -> get_discount -> calc_shipping -> calc_total",
       answer: "Tổng tiền = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
       trace: [
         { type: "llm", step: 1, content: 'Thought: Cần kiểm tra tồn kho và giá.\nAction: check_stock({"item_name": "iPhone"})' },
@@ -54,7 +54,9 @@ const cases = [
         { type: "tool", step: 2, tool: "get_discount", observation: { ok: true, coupon_code: "WINNER", valid: true, discount_percent: 10 } },
         { type: "llm", step: 3, content: 'Thought: Cần tính phí shipping.\nAction: calc_shipping({"weight": 0.8, "destination": "Hanoi"})' },
         { type: "tool", step: 3, tool: "calc_shipping", observation: { ok: true, destination: "Hanoi", weight: 0.8, shipping_cost: 38000, estimated_days: 1 } },
-        { type: "llm", step: 4, content: "Final Answer: Tổng tiền = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND." }
+        { type: "llm", step: 4, content: 'Thought: Cần tính total có cấu trúc.\nAction: calc_total({"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000})' },
+        { type: "tool", step: 4, tool: "calc_total", observation: { ok: true, subtotal: 50000000, discount_amount: 5000000, shipping_cost: 38000, total: 45038000, currency: "VND" } },
+        { type: "llm", step: 5, content: "Final Answer: Tổng tiền = 45,038,000 VND." }
       ]
     }
   },
@@ -91,7 +93,7 @@ const cases = [
     },
     agent: {
       status: "final_answer",
-      toolPath: "check_stock -> get_discount -> calc_shipping",
+      toolPath: "check_stock -> get_discount -> calc_shipping -> calc_total",
       answer: "LEGACY đã hết hạn nên không áp dụng giảm giá. Tổng tiền = 18,000,000 + 45,000 = 18,045,000 VND.",
       trace: [
         { type: "llm", step: 1, content: 'Thought: Cần tồn kho và giá sản phẩm.\nAction: check_stock({"item_name": "iPad"})' },
@@ -100,7 +102,9 @@ const cases = [
         { type: "tool", step: 2, tool: "get_discount", observation: { ok: false, error: "coupon_expired", coupon_code: "LEGACY", valid: false, discount_percent: 0 } },
         { type: "llm", step: 3, content: 'Thought: Coupon hết hạn; cần shipping trước khi tính tổng.\nAction: calc_shipping({"weight": 0.5, "destination": "Saigon"})' },
         { type: "tool", step: 3, tool: "calc_shipping", observation: { ok: true, destination: "Saigon", weight: 0.5, shipping_cost: 45000, estimated_days: 2 } },
-        { type: "llm", step: 4, content: "Final Answer: LEGACY đã hết hạn nên không áp dụng giảm giá. Tổng tiền = 18,000,000 + 45,000 = 18,045,000 VND." }
+        { type: "llm", step: 4, content: 'Thought: Cần tính total không giảm giá.\nAction: calc_total({"item_quantity": 1, "price_per_item": 18000000, "discount_percent": 0, "shipping_cost": 45000})' },
+        { type: "tool", step: 4, tool: "calc_total", observation: { ok: true, subtotal: 18000000, discount_amount: 0, shipping_cost: 45000, total: 18045000, currency: "VND" } },
+        { type: "llm", step: 5, content: "Final Answer: LEGACY đã hết hạn nên không áp dụng giảm giá. Tổng tiền = 18,045,000 VND." }
       ]
     }
   }

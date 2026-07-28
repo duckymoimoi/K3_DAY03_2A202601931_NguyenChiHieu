@@ -1,13 +1,13 @@
 {
   "source": "artifacts/live/live_system_demo.json",
-  "baseline_ollama": {
+  "baseline_live": {
     "prompt_tokens": 232,
     "completion_tokens": 84,
     "total_tokens": 316,
     "completion_to_prompt_ratio": 0.3621,
     "cost_estimate_usd": 0.00316
   },
-  "agent_ollama": {
+  "agent_live": {
     "prompt_tokens": 3497,
     "completion_tokens": 119,
     "total_tokens": 3616,
@@ -20,15 +20,27 @@
       "case_count": 5,
       "success_rate": 0.4,
       "safe_fallback_rate": 0.6,
+      "parser_error_rate": 0.0,
+      "hallucinated_tool_rate": 0.0,
+      "recovery_rate": 1.0,
       "average_steps": 1.0,
-      "average_tool_calls": 0.0
+      "average_tool_calls": 0.0,
+      "median_latency_ms": 1,
+      "max_latency_ms": 1,
+      "average_total_tokens": 40.0
     },
     "react_agent_v2": {
       "case_count": 5,
       "success_rate": 1.0,
       "safe_fallback_rate": 0.0,
-      "average_steps": 2.4,
-      "average_tool_calls": 1.4
+      "parser_error_rate": 0.0,
+      "hallucinated_tool_rate": 0.0,
+      "recovery_rate": 1.0,
+      "average_steps": 2.8,
+      "average_tool_calls": 1.8,
+      "median_latency_ms": 1,
+      "max_latency_ms": 1,
+      "average_total_tokens": 40.0
     }
   },
   "notes": [

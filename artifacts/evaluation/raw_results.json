@@ -10,7 +10,16 @@
       "tool_calls": 0,
       "steps": 1,
       "success": true,
-      "safe_fallback": false
+      "safe_fallback": false,
+      "rubric": {
+        "factual": 2,
+        "grounding": 1,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 11
     },
     {
       "case_id": "case_1_return_policy",
@@ -36,7 +45,16 @@
           "latency_ms": 1,
           "provider": "scripted"
         }
-      ]
+      ],
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_2_working_hours",
@@ -48,7 +66,16 @@
       "tool_calls": 0,
       "steps": 1,
       "success": true,
-      "safe_fallback": false
+      "safe_fallback": false,
+      "rubric": {
+        "factual": 2,
+        "grounding": 1,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 11
     },
     {
       "case_id": "case_2_working_hours",
@@ -74,7 +101,16 @@
           "latency_ms": 1,
           "provider": "scripted"
         }
-      ]
+      ],
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_3_iphone_winner_hanoi",
@@ -86,7 +122,16 @@
       "tool_calls": 0,
       "steps": 1,
       "success": false,
-      "safe_fallback": true
+      "safe_fallback": true,
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_3_iphone_winner_hanoi",
@@ -97,10 +142,11 @@
       "tool_path": [
         "check_stock",
         "get_discount",
-        "calc_shipping"
+        "calc_shipping",
+        "calc_total"
       ],
-      "tool_calls": 3,
-      "steps": 4,
+      "tool_calls": 4,
+      "steps": 5,
       "success": true,
       "safe_fallback": false,
       "trace": [
@@ -189,6 +235,41 @@
         {
           "step": 4,
           "type": "llm",
+          "content": "Thought: Need final checkout total.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
+          "usage": {
+            "prompt_tokens": 20,
+            "completion_tokens": 20,
+            "total_tokens": 40
+          },
+          "latency_ms": 1,
+          "provider": "scripted"
+        },
+        {
+          "step": 4,
+          "type": "tool",
+          "tool": "calc_total",
+          "arguments": {
+            "item_quantity": 2,
+            "price_per_item": 25000000,
+            "discount_percent": 10,
+            "shipping_cost": 38000
+          },
+          "observation": {
+            "ok": true,
+            "item_quantity": 2,
+            "price_per_item": 25000000,
+            "subtotal": 50000000,
+            "discount_percent": 10.0,
+            "discount_amount": 5000000,
+            "shipping_cost": 38000,
+            "total": 45038000,
+            "currency": "VND",
+            "formula": "(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost"
+          }
+        },
+        {
+          "step": 5,
+          "type": "llm",
           "content": "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
           "usage": {
             "prompt_tokens": 20,
@@ -198,7 +279,16 @@
           "latency_ms": 1,
           "provider": "scripted"
         }
-      ]
+      ],
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_4_macbook_out_of_stock",
@@ -210,7 +300,16 @@
       "tool_calls": 0,
       "steps": 1,
       "success": false,
-      "safe_fallback": true
+      "safe_fallback": true,
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_4_macbook_out_of_stock",
@@ -266,7 +365,16 @@
           "latency_ms": 1,
           "provider": "scripted"
         }
-      ]
+      ],
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_5_ipad_legacy_saigon",
@@ -278,7 +386,16 @@
       "tool_calls": 0,
       "steps": 1,
       "success": false,
-      "safe_fallback": true
+      "safe_fallback": true,
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     },
     {
       "case_id": "case_5_ipad_legacy_saigon",
@@ -289,10 +406,11 @@
       "tool_path": [
         "check_stock",
         "get_discount",
-        "calc_shipping"
+        "calc_shipping",
+        "calc_total"
       ],
-      "tool_calls": 3,
-      "steps": 4,
+      "tool_calls": 4,
+      "steps": 5,
       "success": true,
       "safe_fallback": false,
       "trace": [
@@ -383,6 +501,41 @@
         {
           "step": 4,
           "type": "llm",
+          "content": "Thought: Need final total with no discount.\nAction: calc_total({\"item_quantity\": 1, \"price_per_item\": 18000000, \"discount_percent\": 0, \"shipping_cost\": 45000})",
+          "usage": {
+            "prompt_tokens": 20,
+            "completion_tokens": 20,
+            "total_tokens": 40
+          },
+          "latency_ms": 1,
+          "provider": "scripted"
+        },
+        {
+          "step": 4,
+          "type": "tool",
+          "tool": "calc_total",
+          "arguments": {
+            "item_quantity": 1,
+            "price_per_item": 18000000,
+            "discount_percent": 0,
+            "shipping_cost": 45000
+          },
+          "observation": {
+            "ok": true,
+            "item_quantity": 1,
+            "price_per_item": 18000000,
+            "subtotal": 18000000,
+            "discount_percent": 0.0,
+            "discount_amount": 0,
+            "shipping_cost": 45000,
+            "total": 18045000,
+            "currency": "VND",
+            "formula": "(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost"
+          }
+        },
+        {
+          "step": 5,
+          "type": "llm",
           "content": "Final Answer: LEGACY is expired, so no discount applies. Total = 18,000,000 + 45,000 = 18,045,000 VND.",
           "usage": {
             "prompt_tokens": 20,
@@ -392,7 +545,16 @@
           "latency_ms": 1,
           "provider": "scripted"
         }
-      ]
+      ],
+      "rubric": {
+        "factual": 2,
+        "grounding": 2,
+        "tool_selection": 2,
+        "safety": 2,
+        "completeness": 2,
+        "termination": 2
+      },
+      "rubric_total": 12
     }
   ],
   "summary": {
@@ -400,15 +562,27 @@
       "case_count": 5,
       "success_rate": 0.4,
       "safe_fallback_rate": 0.6,
+      "parser_error_rate": 0.0,
+      "hallucinated_tool_rate": 0.0,
+      "recovery_rate": 1.0,
       "average_steps": 1.0,
-      "average_tool_calls": 0.0
+      "average_tool_calls": 0.0,
+      "median_latency_ms": 1,
+      "max_latency_ms": 1,
+      "average_total_tokens": 40.0
     },
     "react_agent_v2": {
       "case_count": 5,
       "success_rate": 1.0,
       "safe_fallback_rate": 0.0,
-      "average_steps": 2.4,
-      "average_tool_calls": 1.4
+      "parser_error_rate": 0.0,
+      "hallucinated_tool_rate": 0.0,
+      "recovery_rate": 1.0,
+      "average_steps": 2.8,
+      "average_tool_calls": 1.8,
+      "median_latency_ms": 1,
+      "max_latency_ms": 1,
+      "average_total_tokens": 40.0
     }
   }
 }

@@ -50,8 +50,8 @@ def main() -> None:
 
     monitoring = {
         "source": "artifacts/live/live_system_demo.json",
-        "baseline_ollama": baseline_usage,
-        "agent_ollama": agent_usage,
+        "baseline_live": baseline_usage,
+        "agent_live": agent_usage,
         "deterministic_summary": eval_summary,
         "notes": [
             "Cost estimate dùng công thức demo trong telemetry: total_tokens / 1000 * 0.01.",

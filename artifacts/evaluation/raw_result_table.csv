@@ -1,0 +1,11 @@
+case,system,factual,grounding,tool_selection,safety,completeness,termination,rubric_total,tool_path,status,steps,tool_calls,success
+case_1_return_policy,baseline_chatbot,2,1,2,2,2,2,11,-,direct_answer,1,0,true
+case_1_return_policy,react_agent_v2,2,2,2,2,2,2,12,-,final_answer,1,0,true
+case_2_working_hours,baseline_chatbot,2,1,2,2,2,2,11,-,direct_answer,1,0,true
+case_2_working_hours,react_agent_v2,2,2,2,2,2,2,12,-,final_answer,1,0,true
+case_3_iphone_winner_hanoi,baseline_chatbot,2,2,2,2,2,2,12,-,safe_fallback,1,0,false
+case_3_iphone_winner_hanoi,react_agent_v2,2,2,2,2,2,2,12,"check_stock -> get_discount -> calc_shipping -> calc_total",final_answer,5,4,true
+case_4_macbook_out_of_stock,baseline_chatbot,2,2,2,2,2,2,12,-,safe_fallback,1,0,false
+case_4_macbook_out_of_stock,react_agent_v2,2,2,2,2,2,2,12,check_stock,final_answer,2,1,true
+case_5_ipad_legacy_saigon,baseline_chatbot,2,2,2,2,2,2,12,-,safe_fallback,1,0,false
+case_5_ipad_legacy_saigon,react_agent_v2,2,2,2,2,2,2,12,"check_stock -> get_discount -> calc_shipping -> calc_total",final_answer,5,4,true

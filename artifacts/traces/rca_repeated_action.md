@@ -3,7 +3,7 @@
 | Mục | Bằng chứng |
 |---|---|
 | User input | `I want to buy 2 iPhones using code WINNER and ship to Hanoi. Total?` |
-| Expected path | `check_stock -> get_discount -> calc_shipping` |
+| Expected path | `check_stock -> get_discount -> calc_shipping -> calc_total` |
 | Actual V1 path | `check_stock -> check_stock -> check_stock` |
 | First divergence | Bước 2 lặp lại `check_stock` thay vì chuyển sang `get_discount`. |
 | Error class | Loop / prompt adherence. |
