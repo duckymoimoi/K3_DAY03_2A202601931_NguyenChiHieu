@@ -24,3 +24,5 @@ def test_web_dashboard_contains_chat_and_processing_flow_sections():
     assert ".workspace" in styles
     assert ".conversation-flow" in styles
     assert ".process-flow" in styles
+    assert "height: 100vh" in styles
+    assert "resize: none" in styles
