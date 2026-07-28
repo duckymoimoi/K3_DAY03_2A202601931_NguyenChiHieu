@@ -1,6 +1,6 @@
 ﻿# Báo cáo cá nhân: Lab 3 - Chatbot vs ReAct Agent
 
-- **Họ tên**: Nguyen Chi Hieu
+- **Họ tên**: Nguyễn Chí Hiếu
 - **Mã sinh viên**: 2A202601931
 - **Ngày hoàn thiện**: 2026-07-28
 
