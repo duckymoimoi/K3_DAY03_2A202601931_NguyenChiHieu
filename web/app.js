@@ -132,6 +132,21 @@ const activeTools = document.querySelector("#activeTools");
 const providerStatus = document.querySelector("#providerStatus");
 const graphDetailTitle = document.querySelector("#graphDetailTitle");
 const graphDetailContent = document.querySelector("#graphDetailContent");
+const metricLlmCalls = document.querySelector("#metricLlmCalls");
+const metricToolCalls = document.querySelector("#metricToolCalls");
+const metricTokens = document.querySelector("#metricTokens");
+const metricLatency = document.querySelector("#metricLatency");
+const metricCost = document.querySelector("#metricCost");
+const metricRatio = document.querySelector("#metricRatio");
+
+let liveMetrics = {
+  llmCalls: 0,
+  toolCalls: 0,
+  promptTokens: 0,
+  completionTokens: 0,
+  totalTokens: 0,
+  latencyMs: 0
+};
 
 function formatTrace(step) {
   if (step.type === "tool") {
@@ -244,6 +259,48 @@ function appendGraphNode(event) {
   showDetail();
 }
 
+function resetMetrics() {
+  liveMetrics = {
+    llmCalls: 0,
+    toolCalls: 0,
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    latencyMs: 0
+  };
+  renderMetrics();
+}
+
+function renderMetrics() {
+  const ratio = liveMetrics.promptTokens
+    ? liveMetrics.completionTokens / liveMetrics.promptTokens
+    : 0;
+  const cost = (liveMetrics.totalTokens / 1000) * 0.01;
+  metricLlmCalls.textContent = liveMetrics.llmCalls;
+  metricToolCalls.textContent = liveMetrics.toolCalls;
+  metricTokens.textContent = liveMetrics.totalTokens.toLocaleString("en-US");
+  metricLatency.textContent = `${liveMetrics.latencyMs.toLocaleString("en-US")} ms`;
+  metricCost.textContent = `$${cost.toFixed(6)}`;
+  metricRatio.textContent = ratio.toFixed(2);
+}
+
+function updateMetrics(event) {
+  if (event.type === "llm") {
+    const usage = event.usage || {};
+    liveMetrics.llmCalls += 1;
+    liveMetrics.promptTokens += usage.prompt_tokens || 0;
+    liveMetrics.completionTokens += usage.completion_tokens || 0;
+    liveMetrics.totalTokens += usage.total_tokens || 0;
+    liveMetrics.latencyMs += event.latency_ms || 0;
+    renderMetrics();
+    return;
+  }
+  if (event.type === "tool") {
+    liveMetrics.toolCalls += 1;
+    renderMetrics();
+  }
+}
+
 function updateSummary(event) {
   if (event.type === "start") {
     activeProvider.textContent = event.provider;
@@ -277,6 +334,7 @@ async function runLive(mode) {
   liveStatus.textContent = mode === "baseline" ? "Đang gọi Baseline..." : "Đang gọi Agent + Tool...";
   liveResult.textContent = "Đang chạy...";
   liveGraph.innerHTML = "";
+  resetMetrics();
   graphDetailTitle.textContent = "Chi tiết node";
   graphDetailContent.textContent = "Graph đang chạy...";
   activeStatus.textContent = "running";
@@ -306,6 +364,7 @@ async function runLive(mode) {
         const event = JSON.parse(line);
         appendGraphNode(event);
         updateSummary(event);
+        updateMetrics(event);
         if (event.type === "error") throw new Error(event.message || event.error);
       }
     }
@@ -335,3 +394,4 @@ async function loadHealth() {
 }
 
 loadHealth();
+renderMetrics();

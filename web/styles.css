@@ -209,7 +209,8 @@ h3 {
   padding-top: 14px;
 }
 
-.live-summary > div {
+.live-summary > div,
+.monitoring-grid > div {
   min-height: 68px;
   background: #f8fafc;
   border: 1px solid var(--line);
@@ -217,18 +218,35 @@ h3 {
   padding: 10px;
 }
 
-.live-summary span {
+.live-summary span,
+.monitoring-grid span {
   display: block;
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.live-summary strong {
+.live-summary strong,
+.monitoring-grid strong {
   display: block;
   margin-top: 4px;
   overflow-wrap: anywhere;
   font-size: 14px;
+}
+
+.monitoring-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.monitoring-grid > div {
+  min-height: 62px;
+}
+
+.monitoring-grid strong {
+  font-size: 18px;
 }
 
 .graph-board {
@@ -563,6 +581,7 @@ code {
   .metrics,
   .comparison,
   .live-summary,
+  .monitoring-grid,
   .tool-grid {
     grid-template-columns: 1fr;
   }

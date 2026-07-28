@@ -19,7 +19,7 @@
       <section class="live-console" aria-label="Live Agent console">
         <div class="section-heading">
           <h2>Hỏi live Agent</h2>
-          <p>Gọi Groq API qua backend `/api/chat/stream`, graph cập nhật theo từng bước.</p>
+          <p>Gọi Groq API qua backend <code>/api/chat/stream</code>, graph và monitoring cập nhật theo từng bước.</p>
         </div>
         <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
         <div class="live-actions">
@@ -36,6 +36,14 @@
           <div><span>Model</span><strong id="activeModel">llama-3.1-8b-instant</strong></div>
           <div><span>Status</span><strong id="activeStatus">idle</strong></div>
           <div><span>Tool path</span><strong id="activeTools">-</strong></div>
+        </div>
+        <div class="monitoring-grid" aria-label="Live monitoring metrics">
+          <div><span>LLM calls</span><strong id="metricLlmCalls">0</strong></div>
+          <div><span>Tool calls</span><strong id="metricToolCalls">0</strong></div>
+          <div><span>Tokens</span><strong id="metricTokens">0</strong></div>
+          <div><span>Latency</span><strong id="metricLatency">0 ms</strong></div>
+          <div><span>Cost estimate</span><strong id="metricCost">$0.000000</strong></div>
+          <div><span>Token ratio</span><strong id="metricRatio">0.00</strong></div>
         </div>
         <div class="graph-board" id="liveGraph" aria-label="Live execution graph"></div>
         <div class="graph-detail-panel">
@@ -155,4 +163,3 @@
     <script src="app.js"></script>
   </body>
 </html>
-
