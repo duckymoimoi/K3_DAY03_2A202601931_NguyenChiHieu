@@ -161,3 +161,18 @@ def test_v2_out_of_scope_question_stops_before_llm_or_tools():
     assert result["tool_calls"] == 0
     assert result["tool_path"] == []
     assert llm.calls == []
+
+
+def test_v2_lists_store_options_with_tool_evidence():
+    agent = ReActAgentV2(
+        ScriptedLLM(['Action: list_store_options({"include_expired": false})']),
+        TOOL_REGISTRY,
+        max_steps=3,
+    )
+
+    result = agent.run("Shop có những sản phẩm và mã giảm giá nào?")
+
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["list_store_options"]
+    assert "AirPods Pro" in result["answer"]
+    assert "VIP20" in result["answer"]

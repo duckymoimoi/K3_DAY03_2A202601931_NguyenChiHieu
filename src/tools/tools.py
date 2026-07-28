@@ -8,11 +8,18 @@ CATALOG = {
     "iphone": {"item_name": "iPhone", "price": 25_000_000, "stock": 15, "weight_kg": 0.4},
     "ipad": {"item_name": "iPad", "price": 18_000_000, "stock": 8, "weight_kg": 0.5},
     "macbook": {"item_name": "MacBook", "price": 35_000_000, "stock": 0, "weight_kg": 2.0},
+    "airpod": {"item_name": "AirPods Pro", "price": 6_000_000, "stock": 20, "weight_kg": 0.2},
+    "apple watch": {"item_name": "Apple Watch", "price": 10_000_000, "stock": 12, "weight_kg": 0.3},
+    "magic keyboard": {"item_name": "Magic Keyboard", "price": 3_500_000, "stock": 25, "weight_kg": 0.6},
+    "studio display": {"item_name": "Studio Display", "price": 42_000_000, "stock": 2, "weight_kg": 6.3},
 }
 
 COUPONS = {
     "WINNER": {"discount_percent": 10, "valid": True},
     "LEGACY": {"discount_percent": 15, "valid": False},
+    "STUDENT": {"discount_percent": 8, "valid": True},
+    "WELCOME5": {"discount_percent": 5, "valid": True},
+    "VIP20": {"discount_percent": 20, "valid": True},
 }
 
 SHIPPING_TABLE = {
@@ -39,6 +46,16 @@ def _normalize_item(item_name: str | None) -> str | None:
     if not item_name or not isinstance(item_name, str):
         return None
     name = item_name.strip().lower()
+    aliases = {
+        "airpods": "airpod",
+        "airpods pro": "airpod",
+        "watch": "apple watch",
+        "apple watches": "apple watch",
+        "keyboard": "magic keyboard",
+        "display": "studio display",
+    }
+    if name in aliases:
+        return aliases[name]
     if name.endswith("s"):
         name = name[:-1]
     return name
@@ -75,7 +92,32 @@ def get_discount(coupon_code: str | None = None) -> Dict[str, Any]:
             discount_percent=0,
         )
 
-    return {"ok": True, "coupon_code": code, "valid": True, "discount_percent": coupon["discount_percent"]}
+    return {"ok": True, "coupon_code": code, "valid": True, **coupon}
+
+
+def list_store_options(include_expired: bool = False) -> Dict[str, Any]:
+    """Return the demo store products, coupon codes, and shipping destinations."""
+    products = []
+    for item in CATALOG.values():
+        products.append(
+            {
+                **deepcopy(item),
+                "status": "in_stock" if item["stock"] > 0 else "out_of_stock",
+            }
+        )
+
+    coupons = []
+    for code, coupon in COUPONS.items():
+        if coupon["valid"] or include_expired:
+            coupons.append({"coupon_code": code, **deepcopy(coupon)})
+
+    destinations = sorted({key.title() for key in SHIPPING_TABLE})
+    return {
+        "ok": True,
+        "products": products,
+        "coupons": coupons,
+        "shipping_destinations": destinations,
+    }
 
 
 def calc_shipping(weight: float | int | None = None, destination: str | None = None) -> Dict[str, Any]:
@@ -179,6 +221,12 @@ def _tool(name: str, description: str, func: Callable[..., Dict[str, Any]], inpu
 
 
 TOOL_REGISTRY: List[Dict[str, Any]] = [
+    _tool(
+        "list_store_options",
+        "Read-only store overview. Use when users ask what products, coupon codes, or demo options are available.",
+        list_store_options,
+        {"include_expired": False},
+    ),
     _tool(
         "check_stock",
         "Read-only catalog lookup. Input: {\"item_name\": \"iPhone\"}. Returns price, stock, weight_kg, and status.",

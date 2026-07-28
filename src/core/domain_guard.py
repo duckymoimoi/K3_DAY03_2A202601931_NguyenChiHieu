@@ -3,9 +3,9 @@ from typing import Dict
 
 
 OUT_OF_SCOPE_ANSWER = (
-    "Demo này chỉ có dữ liệu về catalog iPhone/iPad/MacBook, coupon WINNER/LEGACY, "
-    "shipping tới Hanoi/Saigon và policy cửa hàng. Mình không có evidence cho câu hỏi "
-    "ngoài phạm vi đó nên sẽ không tự bịa câu trả lời."
+    "Demo này chỉ có dữ liệu về catalog Apple demo, coupon, shipping tới Hanoi/Saigon "
+    "và policy cửa hàng. Mình không có evidence cho câu hỏi ngoài phạm vi đó nên sẽ "
+    "không tự bịa câu trả lời."
 )
 
 
@@ -23,12 +23,26 @@ def classify_ecommerce_scope(query: str) -> Dict[str, object]:
         "iphone",
         "ipad",
         "macbook",
+        "airpod",
+        "apple watch",
+        "magic keyboard",
+        "studio display",
+        "san pham",
+        "mat hang",
+        "catalog",
+        "ban gi",
+        "co gi",
     ]
     coupon_terms = [
         "winner",
         "legacy",
+        "student",
+        "welcome5",
+        "vip20",
         "coupon",
+        "voucher",
         "discount",
+        "giam gia",
         "ma ",
         "code",
     ]

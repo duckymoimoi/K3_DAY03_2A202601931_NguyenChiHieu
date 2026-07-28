@@ -6,6 +6,7 @@ from src.tools.tools import (
     calc_shipping,
     check_stock,
     get_discount,
+    list_store_options,
     search_policy,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "calc_shipping",
     "check_stock",
     "get_discount",
+    "list_store_options",
     "search_policy",
 ]

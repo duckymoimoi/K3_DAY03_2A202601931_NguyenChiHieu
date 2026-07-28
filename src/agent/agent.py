@@ -56,6 +56,8 @@ class ReActAgent:
         - Never invent tool names. Use only the listed tools.
         - Never write Observation yourself; the application will append it.
         - Never include multiple Action lines in one response.
+        - For questions asking what products, coupon codes, or store demo options
+          are available, call list_store_options.
         - Do not claim checkout success until tool evidence supports stock, price,
           coupon status, shipping fee, and final total.
         - For static policy or working-hours questions, answer directly with Final Answer.
@@ -261,6 +263,21 @@ class ReActAgent:
                 self._emit(on_event, {"type": "result", "result": result})
                 return result
 
+            if tool_name == "list_store_options" and observation.get("ok") is True:
+                final_answer = self._format_store_options_answer(observation)
+                result = {
+                    "answer": final_answer,
+                    "status": "final_answer",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
+                return result
+
             if tool_name == "calc_total" and observation.get("ok") is True and "total" in observation:
                 final_answer = self._format_total_answer(observation)
                 result = {
@@ -414,6 +431,29 @@ class ReActAgent:
             f"shipping {shipping_cost:,} {currency}."
         )
 
+    def _format_store_options_answer(self, observation: Dict[str, Any]) -> str:
+        product_lines = []
+        for product in observation.get("products", []):
+            status = "in stock" if product.get("status") == "in_stock" else "out of stock"
+            product_lines.append(
+                f"{product['item_name']} ({product['price']:,} VND, {status}, "
+                f"{product['stock']} units, {product['weight_kg']} kg)"
+            )
+
+        coupon_lines = []
+        for coupon in observation.get("coupons", []):
+            status = "valid" if coupon.get("valid") else "expired"
+            coupon_lines.append(f"{coupon['coupon_code']} ({coupon['discount_percent']}%, {status})")
+
+        destinations = ", ".join(observation.get("shipping_destinations", []))
+        return (
+            "Products: "
+            + "; ".join(product_lines)
+            + ". Coupons: "
+            + "; ".join(coupon_lines)
+            + f". Shipping destinations: {destinations}."
+        )
+
     def _missing_required_tools(
         self,
         user_input: str,
@@ -421,7 +461,18 @@ class ReActAgent:
         trace: List[Dict[str, Any]],
     ) -> List[str]:
         normalized = normalize_text(user_input)
-        dynamic_item = any(term in normalized for term in ["iphone", "ipad", "macbook"])
+        dynamic_item = any(
+            term in normalized
+            for term in [
+                "iphone",
+                "ipad",
+                "macbook",
+                "airpod",
+                "apple watch",
+                "magic keyboard",
+                "studio display",
+            ]
+        )
         checkout_total = any(term in normalized for term in ["total", "how much", "bao nhieu", "tong tien"])
         if not dynamic_item or not checkout_total:
             return []
