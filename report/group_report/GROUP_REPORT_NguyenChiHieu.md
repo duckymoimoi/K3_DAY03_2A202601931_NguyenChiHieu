@@ -1,7 +1,7 @@
 ﻿# Báo cáo nhóm: Lab 3 - Chatbot vs ReAct Agent
 
-- **Tên nhóm**: NguyenChiHieu Demo Team
-- **Thành viên**: Nguyen Chi Hieu - 2A202601931
+- **Tên nhóm**: NguyenChiHieu Team
+- **Thành viên**: Nguyễn Chí Hiếu - 2A202601931
 - **Ngày hoàn thiện**: 2026-07-28
 
 ## 1. Tóm tắt
@@ -125,7 +125,7 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 | MacBook + Saigon | Safe fallback | Dừng sau khi thấy hết hàng | Agent an toàn hơn |
 | iPad + LEGACY + Saigon | Safe fallback | Tính tổng không giảm giá vì coupon hết hạn | Agent tốt hơn |
 
-## 7. Exit ticket 60 giây
+## 7. Exit ticket 
 
 1. **Chatbot fail hoặc fallback ở case nào, vì sao?**
 
