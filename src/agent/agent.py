@@ -278,6 +278,21 @@ class ReActAgent:
                 self._emit(on_event, {"type": "result", "result": result})
                 return result
 
+            if tool_name == "calc_shipping" and observation.get("ok") is False:
+                final_answer = self._format_shipping_error_answer(observation)
+                result = {
+                    "answer": final_answer,
+                    "status": "safe_fallback",
+                    "trace": trace,
+                    "steps": step,
+                    "tool_calls": len(tool_path),
+                    "tool_path": tool_path,
+                    "prompt_history": prompt_history,
+                }
+                logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
+                return result
+
             if tool_name == "calc_total" and observation.get("ok") is True and "total" in observation:
                 final_answer = self._format_total_answer(observation)
                 result = {
@@ -445,14 +460,34 @@ class ReActAgent:
             status = "valid" if coupon.get("valid") else "expired"
             coupon_lines.append(f"{coupon['coupon_code']} ({coupon['discount_percent']}%, {status})")
 
-        destinations = ", ".join(observation.get("shipping_destinations", []))
+        shipping_lines = []
+        for option in observation.get("shipping_options", []):
+            shipping_lines.append(
+                f"{option['destination']} (base {option['base_cost']:,} VND + "
+                f"{option['per_kg']:,} VND/kg, {option['estimated_days']} day(s))"
+            )
+        destinations = "; ".join(shipping_lines) or ", ".join(observation.get("shipping_destinations", []))
         return (
             "Products: "
             + "; ".join(product_lines)
             + ". Coupons: "
             + "; ".join(coupon_lines)
-            + f". Shipping destinations: {destinations}."
+            + f". Shipping: {destinations}."
         )
+
+    def _format_shipping_error_answer(self, observation: Dict[str, Any]) -> str:
+        error = observation.get("error")
+        if error == "unsupported_destination":
+            supported = ", ".join(observation.get("supported_destinations", []))
+            return (
+                f"Shipping is not supported for that destination yet. "
+                f"Supported destinations: {supported}."
+            )
+        if error == "missing_argument":
+            supported = ", ".join(observation.get("supported_destinations", []))
+            suffix = f" Supported destinations: {supported}." if supported else ""
+            return f"I need a shipping destination before calculating shipping.{suffix}"
+        return observation.get("message", "Shipping could not be calculated safely.")
 
     def _missing_required_tools(
         self,

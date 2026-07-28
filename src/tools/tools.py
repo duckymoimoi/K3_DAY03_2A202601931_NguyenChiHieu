@@ -3,6 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Callable, Dict, List
 
+from src.core.domain_guard import normalize_text
+
 
 CATALOG = {
     "iphone": {"item_name": "iPhone", "price": 25_000_000, "stock": 15, "weight_kg": 0.4},
@@ -23,10 +25,16 @@ COUPONS = {
 }
 
 SHIPPING_TABLE = {
-    "hanoi": {"base_cost": 30_000, "per_kg": 10_000, "estimated_days": 1},
-    "ha noi": {"base_cost": 30_000, "per_kg": 10_000, "estimated_days": 1},
-    "saigon": {"base_cost": 35_000, "per_kg": 20_000, "estimated_days": 2},
-    "ho chi minh": {"base_cost": 35_000, "per_kg": 20_000, "estimated_days": 2},
+    "hanoi": {"label": "Hanoi", "base_cost": 30_000, "per_kg": 10_000, "estimated_days": 1},
+    "ha noi": {"label": "Hanoi", "base_cost": 30_000, "per_kg": 10_000, "estimated_days": 1},
+    "saigon": {"label": "Saigon", "base_cost": 35_000, "per_kg": 20_000, "estimated_days": 2},
+    "ho chi minh": {"label": "Saigon", "base_cost": 35_000, "per_kg": 20_000, "estimated_days": 2},
+    "da nang": {"label": "Da Nang", "base_cost": 45_000, "per_kg": 18_000, "estimated_days": 3},
+    "danang": {"label": "Da Nang", "base_cost": 45_000, "per_kg": 18_000, "estimated_days": 3},
+    "hai phong": {"label": "Hai Phong", "base_cost": 32_000, "per_kg": 12_000, "estimated_days": 2},
+    "can tho": {"label": "Can Tho", "base_cost": 42_000, "per_kg": 18_000, "estimated_days": 3},
+    "hue": {"label": "Hue", "base_cost": 44_000, "per_kg": 16_000, "estimated_days": 3},
+    "nha trang": {"label": "Nha Trang", "base_cost": 48_000, "per_kg": 18_000, "estimated_days": 4},
 }
 
 POLICY_DOCS = {
@@ -111,12 +119,21 @@ def list_store_options(include_expired: bool = False) -> Dict[str, Any]:
         if coupon["valid"] or include_expired:
             coupons.append({"coupon_code": code, **deepcopy(coupon)})
 
-    destinations = sorted({key.title() for key in SHIPPING_TABLE})
+    shipping_options_by_label = {}
+    for rule in SHIPPING_TABLE.values():
+        shipping_options_by_label[rule["label"]] = {
+            "destination": rule["label"],
+            "base_cost": rule["base_cost"],
+            "per_kg": rule["per_kg"],
+            "estimated_days": rule["estimated_days"],
+        }
+    shipping_options = sorted(shipping_options_by_label.values(), key=lambda item: item["destination"])
     return {
         "ok": True,
         "products": products,
         "coupons": coupons,
-        "shipping_destinations": destinations,
+        "shipping_destinations": [option["destination"] for option in shipping_options],
+        "shipping_options": shipping_options,
     }
 
 
@@ -125,7 +142,12 @@ def calc_shipping(weight: float | int | None = None, destination: str | None = N
     if weight is None:
         return _error("missing_argument", "weight is required.", required=["weight"])
     if not destination or not isinstance(destination, str):
-        return _error("missing_argument", "destination is required.", required=["destination"])
+        return _error(
+            "missing_argument",
+            "destination is required.",
+            required=["destination"],
+            supported_destinations=list_store_options()["shipping_destinations"],
+        )
 
     try:
         numeric_weight = float(weight)
@@ -134,16 +156,22 @@ def calc_shipping(weight: float | int | None = None, destination: str | None = N
     if numeric_weight <= 0:
         return _error("invalid_argument", "weight must be greater than 0.", received=weight)
 
-    destination_key = destination.strip().lower()
+    destination_key = normalize_text(destination.strip())
     rule = SHIPPING_TABLE.get(destination_key)
     if rule is None:
-        return _error("unsupported_destination", f"Shipping to '{destination}' is not supported.")
+        return _error(
+            "unsupported_destination",
+            f"Shipping to '{destination}' is not supported.",
+            supported_destinations=list_store_options()["shipping_destinations"],
+        )
 
     shipping_cost = int(rule["base_cost"] + numeric_weight * rule["per_kg"])
     return {
         "ok": True,
-        "destination": destination,
+        "destination": rule["label"],
         "weight": numeric_weight,
+        "base_cost": rule["base_cost"],
+        "per_kg": rule["per_kg"],
         "shipping_cost": shipping_cost,
         "estimated_days": rule["estimated_days"],
     }

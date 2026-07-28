@@ -32,6 +32,25 @@ def test_coupon_and_shipping_are_deterministic():
     assert calc_shipping(0.8, "Hanoi") == calc_shipping(0.8, "Hanoi")
 
 
+def test_new_shipping_destinations_include_pricing_and_accented_names():
+    da_nang = calc_shipping(1, "Đà Nẵng")
+    hai_phong = calc_shipping(2, "Hai Phong")
+
+    assert da_nang["ok"] is True
+    assert da_nang["destination"] == "Da Nang"
+    assert da_nang["shipping_cost"] == 63_000
+    assert da_nang["estimated_days"] == 3
+    assert hai_phong["shipping_cost"] == 56_000
+
+
+def test_unsupported_shipping_destination_returns_supported_list():
+    result = calc_shipping(1, "Phu Quoc")
+
+    assert result["ok"] is False
+    assert result["error"] == "unsupported_destination"
+    assert "Da Nang" in result["supported_destinations"]
+
+
 def test_expired_coupon_returns_no_discount_signal():
     result = get_discount("LEGACY")
 
@@ -51,8 +70,10 @@ def test_list_store_options_returns_products_and_valid_coupons():
 
     product_names = {product["item_name"] for product in result["products"]}
     coupon_codes = {coupon["coupon_code"] for coupon in result["coupons"]}
+    shipping_names = {option["destination"] for option in result["shipping_options"]}
     assert {"AirPods Pro", "Apple Watch", "Magic Keyboard", "Studio Display"} <= product_names
     assert {"WINNER", "STUDENT", "VIP20", "WELCOME5"} <= coupon_codes
+    assert {"Da Nang", "Hai Phong", "Can Tho", "Hue", "Nha Trang"} <= shipping_names
     assert "LEGACY" not in coupon_codes
 
 

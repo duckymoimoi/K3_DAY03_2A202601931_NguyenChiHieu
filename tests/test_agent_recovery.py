@@ -176,3 +176,19 @@ def test_v2_lists_store_options_with_tool_evidence():
     assert result["tool_path"] == ["list_store_options"]
     assert "AirPods Pro" in result["answer"]
     assert "VIP20" in result["answer"]
+    assert "Da Nang" in result["answer"]
+
+
+def test_v2_stops_safely_when_shipping_destination_is_unsupported():
+    agent = ReActAgentV2(
+        ScriptedLLM(['Action: calc_shipping({"weight": 0.8, "destination": "Phu Quoc"})']),
+        TOOL_REGISTRY,
+        max_steps=3,
+    )
+
+    result = agent.run("Tôi muốn ship 1 iPhone tới Phu Quoc, phí bao nhiêu?")
+
+    assert result["status"] == "safe_fallback"
+    assert result["tool_path"] == ["calc_shipping"]
+    assert "not supported" in result["answer"]
+    assert "Da Nang" in result["answer"]

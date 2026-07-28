@@ -10,11 +10,12 @@ OUT_OF_SCOPE_ANSWER = (
 
 
 def normalize_text(text: str) -> str:
-    return "".join(
+    normalized = "".join(
         char
         for char in unicodedata.normalize("NFD", text.lower())
         if unicodedata.category(char) != "Mn"
     )
+    return normalized.replace("đ", "d")
 
 
 def classify_ecommerce_scope(query: str) -> Dict[str, object]:
