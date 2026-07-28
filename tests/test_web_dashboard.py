@@ -4,23 +4,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_web_dashboard_contains_required_flow_sections():
+def test_web_dashboard_contains_chat_and_processing_flow_sections():
     index = (ROOT / "web/index.html").read_text(encoding="utf-8")
     app = (ROOT / "web/app.js").read_text(encoding="utf-8")
+    styles = (ROOT / "web/styles.css").read_text(encoding="utf-8")
 
-    assert "Live Agent demo e-commerce" in index
-    assert "Hỏi live Agent" in index
-    assert "Groq API" in index
-    assert "Dữ liệu và quy trình thực nghiệm cũ" in index
+    assert "Live e-commerce chatbot" in index
+    assert "conversationFlow" in index
+    assert "liveGraph" in index
+    assert "Cloud API" in index
     assert "Live monitoring metrics" in index
     assert "LLM calls" in index
     assert "Token ratio" in index
-    assert "Baseline Chatbot" in index
-    assert "ReAct Agent V2" in index
     assert "/api/chat/stream" in app
-    assert "graph-node" in app
+    assert "appendMessage" in app
+    assert "appendFlowStep" in app
+    assert "flow-step" in app
     assert "Scope gate" in app
-    assert "Stopped before LLM to avoid hallucination." in app
-    assert "updateMetrics" in app
-    assert "check_stock -> get_discount -> calc_shipping" in app
-    assert "45,038,000 VND" in app
+    assert ".workspace" in styles
+    assert ".conversation-flow" in styles
+    assert ".process-flow" in styles

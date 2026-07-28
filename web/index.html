@@ -1,162 +1,80 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lab 03 - Bảng theo dõi ReAct Agent</title>
+    <title>Lab 03 - Live Chatbot Agent</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="shell">
+    <main class="app-shell">
       <header class="topbar">
         <div>
           <p class="eyebrow">Lab 03 · Chatbot vs ReAct Agent</p>
-          <h1>Live Agent demo e-commerce</h1>
+          <h1>Live e-commerce chatbot</h1>
         </div>
-        <div class="status-pill" id="providerStatus">Groq API</div>
+        <div class="status-pill" id="providerStatus">Cloud API</div>
       </header>
 
-      <section class="live-console" aria-label="Live Agent console">
-        <div class="section-heading">
-          <h2>Hỏi live Agent</h2>
-        </div>
-        <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
-        <div class="live-actions">
-          <select id="providerSelect" aria-label="Chọn provider">
-            <option value="groq" selected>Groq API</option>
-            <option value="ollama">Ollama local</option>
-          </select>
-          <button id="askAgent" type="button">Chạy ReAct Agent</button>
-          <button id="askBaseline" type="button">Chạy Baseline</button>
-          <span id="liveStatus">Sẵn sàng</span>
-        </div>
-        <div class="live-summary">
-          <div><span>Provider</span><strong id="activeProvider">groq</strong></div>
-          <div><span>Model</span><strong id="activeModel">llama-3.1-8b-instant</strong></div>
-          <div><span>Status</span><strong id="activeStatus">idle</strong></div>
-          <div><span>Tool path</span><strong id="activeTools">-</strong></div>
-        </div>
-        <div class="monitoring-grid" aria-label="Live monitoring metrics">
-          <div><span>LLM calls</span><strong id="metricLlmCalls">0</strong></div>
-          <div><span>Tool calls</span><strong id="metricToolCalls">0</strong></div>
-          <div><span>Tokens</span><strong id="metricTokens">0</strong></div>
-          <div><span>Latency</span><strong id="metricLatency">0 ms</strong></div>
-          <div><span>Token ratio</span><strong id="metricRatio">0.00</strong></div>
-        </div>
-        <div class="graph-board" id="liveGraph" aria-label="Live execution graph"></div>
-        <div class="graph-detail-panel">
-          <strong id="graphDetailTitle">Chi tiết node</strong>
-          <pre id="graphDetailContent">Di chuột vào một node trong graph để xem đầy đủ prompt/action/observation.</pre>
-        </div>
-        <div class="final-answer">
-          <h3>Final answer</h3>
-          <p id="liveResult">Chưa có lượt hỏi live.</p>
-        </div>
-      </section>
+      <section class="workspace" aria-label="Live chatbot workspace">
+        <section class="chat-panel" aria-label="Conversation">
+          <div class="panel-header">
+            <div>
+              <h2>Cuộc trò chuyện</h2>
+              <p>Hỏi về sản phẩm, coupon, shipping, policy hoặc checkout total.</p>
+            </div>
+            <span id="liveStatus">Sẵn sàng</span>
+          </div>
 
-      <details class="archive-section">
-        <summary>Dữ liệu và quy trình thực nghiệm cũ</summary>
-        <section class="metrics" aria-label="Evaluation metrics">
-          <div>
-            <span>Baseline success</span>
-            <strong id="baselineSuccess">40%</strong>
+          <div class="conversation-flow" id="conversationFlow" aria-live="polite">
+            <article class="message assistant">
+              <span>Agent</span>
+              <p>Chào bạn. Mình có thể kiểm tra catalog, coupon, shipping và tính tổng đơn hàng bằng tool evidence.</p>
+            </article>
           </div>
-          <div>
-            <span>Agent V2 success</span>
-            <strong id="agentSuccess">100%</strong>
-          </div>
-          <div>
-            <span>Steps trung bình</span>
-            <strong id="avgSteps">2.8</strong>
-          </div>
-          <div>
-            <span>Tool calls trung bình</span>
-            <strong id="avgTools">1.8</strong>
+
+          <div class="composer">
+            <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
+            <div class="composer-actions">
+              <select id="providerSelect" aria-label="Chọn provider">
+                <option value="groq" selected>Cloud API</option>
+                <option value="ollama">Ollama local</option>
+              </select>
+              <button id="askAgent" type="button">Chạy ReAct Agent</button>
+              <button id="askBaseline" type="button">Chạy Baseline</button>
+            </div>
           </div>
         </section>
 
-        <section class="visual-flow" aria-label="System flow">
-          <img src="assets/agent-flow.svg" alt="Luồng từ User query tới chatbot, ReAct Agent, Tool Registry, Observation và Final Answer" />
-        </section>
+        <aside class="inspector-panel" aria-label="Processing flow and monitoring">
+          <section class="summary-card">
+            <div><span>Provider</span><strong id="activeProvider">groq</strong></div>
+            <div><span>Model</span><strong id="activeModel">llama-3.1-8b-instant</strong></div>
+            <div><span>Status</span><strong id="activeStatus">idle</strong></div>
+            <div><span>Tool path</span><strong id="activeTools">-</strong></div>
+          </section>
 
-      <section class="case-strip" aria-label="Chọn test case">
-        <div class="section-heading">
-          <h2>5 test cases dùng chung</h2>
-          <p>Chatbot và Agent nhận cùng input; chỉ Agent được gọi Tool.</p>
-        </div>
-        <div id="caseButtons" class="case-buttons"></div>
+          <section class="monitoring-card" aria-label="Live monitoring metrics">
+            <div><span>LLM calls</span><strong id="metricLlmCalls">0</strong></div>
+            <div><span>Tool calls</span><strong id="metricToolCalls">0</strong></div>
+            <div><span>Tokens</span><strong id="metricTokens">0</strong></div>
+            <div><span>Latency</span><strong id="metricLatency">0 ms</strong></div>
+            <div><span>Token ratio</span><strong id="metricRatio">0.00</strong></div>
+          </section>
+
+          <section class="flow-panel" aria-label="Agent processing flow">
+            <div class="panel-header compact">
+              <div>
+                <h2>Luồng xử lý</h2>
+                <p>Mỗi bước hiển thị trực tiếp action, arguments và observation.</p>
+              </div>
+            </div>
+            <div class="process-flow" id="liveGraph">
+              <article class="flow-empty">Chưa có trace. Chạy Agent hoặc Baseline để xem từng bước.</article>
+            </div>
+          </section>
+        </aside>
       </section>
-
-      <section class="comparison" aria-label="So sánh hệ thống">
-        <article class="panel">
-          <div class="panel-title">
-            <span>Baseline Chatbot</span>
-            <b>1 LLM call · 0 Tool</b>
-          </div>
-          <p id="baselineAnswer" class="answer"></p>
-          <dl class="kv">
-            <div><dt>Trạng thái</dt><dd id="baselineStatus"></dd></div>
-            <div><dt>Thiếu bằng chứng</dt><dd id="baselineEvidence"></dd></div>
-          </dl>
-        </article>
-
-        <article class="panel">
-          <div class="panel-title">
-            <span>ReAct Agent V2</span>
-            <b>Thought → Action → Observation</b>
-          </div>
-          <p id="agentAnswer" class="answer"></p>
-          <dl class="kv">
-            <div><dt>Trạng thái</dt><dd id="agentStatus"></dd></div>
-            <div><dt>Tool path</dt><dd id="toolPath"></dd></div>
-          </dl>
-        </article>
-      </section>
-
-      <section class="trace-area" aria-label="Agent trace">
-        <div class="section-heading">
-          <h2>Trace quan sát được</h2>
-          <p>Mỗi Action sinh đúng một Observation do application chèn vào.</p>
-        </div>
-        <div id="traceList" class="trace-list"></div>
-      </section>
-
-      <section class="tool-grid" aria-label="Tool contracts">
-        <div class="tool-card">
-          <span class="tool-dot blue"></span>
-          <h3>check_stock</h3>
-          <p>Trả về giá, tồn kho, weight_kg và status.</p>
-        </div>
-        <div class="tool-card">
-          <span class="tool-dot green"></span>
-          <h3>get_discount</h3>
-          <p>Kiểm tra WINNER hoặc trả structured coupon error.</p>
-        </div>
-        <div class="tool-card">
-          <span class="tool-dot amber"></span>
-          <h3>calc_shipping</h3>
-          <p>Tính shipping cost và estimated days.</p>
-        </div>
-        <div class="tool-card">
-          <span class="tool-dot teal"></span>
-          <h3>calc_total</h3>
-          <p>Tính checkout total sau khi đã có đủ Observation.</p>
-        </div>
-        <div class="tool-card">
-          <span class="tool-dot violet"></span>
-          <h3>search_policy</h3>
-          <p>Search policy nội bộ cho câu hỏi chính sách.</p>
-        </div>
-      </section>
-
-      <section class="rca">
-        <div>
-          <h2>Sửa lỗi từ V1 sang V2</h2>
-          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection, evidence gate và prerequisite guardrail cho <code>calc_total</code>. Live demo mặc định dùng Groq API.</p>
-        </div>
-        <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Mở RCA artifact</a>
-      </section>
-      </details>
     </main>
     <script src="app.js"></script>
   </body>
