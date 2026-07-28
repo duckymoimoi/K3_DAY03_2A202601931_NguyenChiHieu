@@ -1,10 +1,10 @@
 {
   "provider": "ollama",
-  "model": "qwen2.5:3b",
+  "model": "qwen3.5:4b",
   "runs_local": true,
   "prompt": "Toi muon mua 2 iPhone, dung ma WINNER va giao toi Ha Noi. Tong tien la bao nhieu?",
   "result": {
-    "answer": "The answer to your question needs evidence for the stock availability of the iPhones, their current price, whether the code WINNER is valid and applicable, the shipping fee to Ha Noi, and finally, the total cost including all these factors. I cannot provide a specific total without this information.",
+    "answer": "Để tính toán được tổng tiền chính xác cho đơn hàng của bạn, tôi cần có bằng chứng về số lượng iPhone còn hàng và giá bán hiện tại, mức giảm giá của mã code WINNER có hiệu lực không, phí vận chuyển đến Hà Nội cụ thể là bao nhiêu. Vì tôi không thể truy cập vào hệ thống dữ liệu thời gian thực để kiểm tra các thông tin này nên tôi không thể xác nhận tổng tiền cuối cùng cho bạn.",
     "llm_calls": 1,
     "tool_calls": 0,
     "grounded": false,
@@ -16,11 +16,11 @@
       "final_total"
     ],
     "usage": {
-      "prompt_tokens": 218,
-      "completion_tokens": 59,
-      "total_tokens": 277
+      "prompt_tokens": 221,
+      "completion_tokens": 1400,
+      "total_tokens": 1621
     },
-    "latency_ms": 3150,
+    "latency_ms": 31089,
     "provider": "ollama"
   },
   "note": "Live local smoke test only. Deterministic grading artifacts still use ScriptedLLM."

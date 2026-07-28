@@ -134,9 +134,80 @@ h3 {
 }
 
 .case-strip,
+.live-console,
 .trace-area {
   padding: 18px;
   margin-bottom: 14px;
+}
+
+.live-console {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.live-console textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+}
+
+.live-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.live-actions button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--blue);
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 10px 14px;
+}
+
+.live-actions button:nth-child(2) {
+  background: var(--green);
+}
+
+.live-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.live-actions span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.live-output {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+
+.live-output article {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.live-output pre {
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .section-heading {
@@ -225,6 +296,11 @@ h3 {
 .trace-list {
   display: grid;
   gap: 10px;
+}
+
+.trace-list.compact {
+  max-height: 420px;
+  overflow: auto;
 }
 
 .trace-step {
@@ -318,8 +394,14 @@ code {
 
   .metrics,
   .comparison,
+  .live-output,
   .tool-grid {
     grid-template-columns: 1fr;
+  }
+
+  .live-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .case-buttons {

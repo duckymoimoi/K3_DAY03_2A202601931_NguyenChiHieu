@@ -1,19 +1,19 @@
 {
   "source": "artifacts/live/live_system_demo.json",
   "baseline_ollama": {
-    "prompt_tokens": 213,
-    "completion_tokens": 77,
-    "total_tokens": 290,
-    "completion_to_prompt_ratio": 0.3615,
-    "cost_estimate_usd": 0.0029
+    "prompt_tokens": 218,
+    "completion_tokens": 739,
+    "total_tokens": 957,
+    "completion_to_prompt_ratio": 3.3899,
+    "cost_estimate_usd": 0.00957
   },
   "agent_ollama": {
-    "prompt_tokens": 4613,
-    "completion_tokens": 229,
-    "total_tokens": 4842,
-    "latency_ms": 16336,
-    "completion_to_prompt_ratio": 0.0496,
-    "cost_estimate_usd": 0.04842
+    "prompt_tokens": 3882,
+    "completion_tokens": 1262,
+    "total_tokens": 5144,
+    "latency_ms": 38185,
+    "completion_to_prompt_ratio": 0.3251,
+    "cost_estimate_usd": 0.05144
   },
   "deterministic_summary": {
     "baseline_chatbot": {

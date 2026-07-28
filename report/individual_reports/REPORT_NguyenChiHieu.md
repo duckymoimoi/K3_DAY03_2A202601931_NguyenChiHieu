@@ -1,4 +1,4 @@
-# Báo cáo cá nhân: Lab 3 - Chatbot vs ReAct Agent
+﻿# Báo cáo cá nhân: Lab 3 - Chatbot vs ReAct Agent
 
 - **Họ tên**: Nguyen Chi Hieu
 - **Mã sinh viên**: 2A202601931
@@ -12,7 +12,7 @@
 - Implement `ReAct Agent V2` với repeated-action guardrail trong `src/agent/agent_v2.py`.
 - Thêm unit tests cho chatbot baseline, Tool, ReAct loop, recovery và web UI.
 - Thêm script deterministic evaluation: `scripts/run_lab_evaluation.py`.
-- Thêm `OllamaProvider` và smoke scripts cho model local `qwen2.5:3b`.
+- Thêm `OllamaProvider` và smoke scripts cho model local `qwen3.5:4b`.
 - Thêm live system demo `scripts/run_live_demo.py` và bonus artifacts trong `artifacts/bonus/`.
 - Xây web UI tĩnh trong `web/`.
 
@@ -23,7 +23,7 @@
 - **First divergence**: Bước 2 lặp lại `check_stock`.
 - **Chẩn đoán**: Loop có `max_steps`, nhưng chưa có repeated-action detector.
 - **Cách sửa**: `ReActAgentV2` dừng an toàn khi cùng một Tool và arguments bị lặp lại mà không có bằng chứng mới.
-- **Phát hiện từ live model**: Ollama `qwen2.5:3b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate và `calc_total` prerequisite guardrail cho câu hỏi checkout.
+- **Phát hiện từ live model**: Ollama `qwen3.5:4b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate và `calc_total` prerequisite guardrail cho câu hỏi checkout.
 - **Bằng chứng kiểm thử**: `python -m pytest tests/test_agent_recovery.py -q`
 
 ## III. Bonus evidence cá nhân
@@ -47,3 +47,4 @@ ReAct Agent tốn nhiều bước hơn vì phải gọi Tool, nhưng đổi lạ
 - Thêm human confirmation trước khi thực hiện purchase/payment.
 - Theo dõi cost và latency cho từng LLM call và Tool call.
 - Dùng graph-based framework nếu workflow checkout có nhiều nhánh phức tạp.
+

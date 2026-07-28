@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-import sys
-
 sys.path.insert(0, str(ROOT))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from src.agent.agent_v2 import ReActAgentV2
 from src.core.ollama_provider import OllamaProvider
@@ -18,7 +19,7 @@ QUERY = "I want to buy 2 iPhones using code WINNER and ship to Hanoi. The packag
 
 
 def main() -> None:
-    provider = OllamaProvider(model_name="qwen2.5:3b")
+    provider = OllamaProvider(model_name="qwen3.5:4b")
     agent = ReActAgentV2(provider, TOOL_REGISTRY, max_steps=8)
     result = agent.run(QUERY)
 

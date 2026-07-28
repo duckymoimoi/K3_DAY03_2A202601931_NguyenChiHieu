@@ -13,10 +13,10 @@ def test_ollama_provider_generate_matches_llm_provider_contract():
     mock_response.raise_for_status.return_value = None
 
     with patch("src.core.ollama_provider.requests.post", return_value=mock_response):
-        provider = OllamaProvider(model_name="qwen2.5:3b")
+        provider = OllamaProvider(model_name="qwen3.5:4b")
         result = provider.generate("hello", system_prompt="system")
 
     assert result["provider"] == "ollama"
-    assert result["model"] == "qwen2.5:3b"
+    assert result["model"] == "qwen3.5:4b"
     assert result["content"] == "Final Answer: hello"
     assert result["usage"]["total_tokens"] == 7

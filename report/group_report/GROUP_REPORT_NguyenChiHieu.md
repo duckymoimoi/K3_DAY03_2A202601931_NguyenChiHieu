@@ -1,4 +1,4 @@
-# Báo cáo nhóm: Lab 3 - Chatbot vs ReAct Agent
+﻿# Báo cáo nhóm: Lab 3 - Chatbot vs ReAct Agent
 
 - **Tên nhóm**: NguyenChiHieu Demo Team
 - **Thành viên**: Nguyen Chi Hieu - 2A202601931
@@ -60,7 +60,7 @@ flowchart LR
 ### 2.3 LLM Provider
 
 - **Evaluation deterministic**: `ScriptedLLM`
-- **Live local smoke test**: Ollama `qwen2.5:3b` qua `src/core/ollama_provider.py`
+- **Live local smoke test**: Ollama `qwen3.5:4b` qua `src/core/ollama_provider.py`
 - **Provider mở rộng**: OpenAI, Gemini và local GGUF được giữ trong `src/core/`
 
 ## 3. Telemetry và kết quả đánh giá
@@ -92,14 +92,14 @@ Tóm tắt từ `artifacts/evaluation/summary.json`:
 
 ### Live local Ollama finding
 
-Đã chạy Ollama local `qwen2.5:3b` bằng hai script:
+Đã chạy Ollama local `qwen3.5:4b` bằng hai script:
 
 ```bash
 python scripts/run_ollama_smoke.py
 python scripts/run_ollama_agent_smoke.py
 ```
 
-Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Ollama local `qwen2.5:3b` đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
+Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Ollama local `qwen3.5:4b` đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
 
 ## 5. Bonus evidence
 
@@ -117,7 +117,7 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 | :--- | :--- | :--- | :--- |
 | Chính sách đổi trả | Trả lời trực tiếp | Trả lời trực tiếp | Chatbot đủ tốt và rẻ hơn |
 | Giờ làm việc | Trả lời trực tiếp | Trả lời trực tiếp | Chatbot đủ tốt và rẻ hơn |
-| 2 iPhones + WINNER + Hanoi | Safe fallback | Tổng tiền có bằng chứng từ 3 Tool | Agent tốt hơn |
+| 2 iPhones + WINNER + Hanoi | Safe fallback | Tổng tiền có bằng chứng từ Tool path `check_stock -> get_discount -> calc_shipping -> calc_total` | Agent tốt hơn |
 | MacBook + Saigon | Safe fallback | Dừng sau khi thấy hết hàng | Agent an toàn hơn |
 | iPad + LEGACY + Saigon | Safe fallback | Tính tổng không giảm giá vì coupon hết hạn | Agent tốt hơn |
 
@@ -126,5 +126,6 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 - **Bảo mật**: `.env`, logs, model files và API keys đã được ignore.
 - **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection, evidence gate và prerequisite guardrail trước khi gọi `calc_total`.
 - **Observability**: Agent trả về trace, ghi structured logs và có bonus monitoring artifact.
-- **UI artifact**: `web/index.html` hiển thị metrics, Tool path và trace timeline.
+- **UI artifact**: `web/index.html` hiển thị metrics, Tool path, trace timeline và form hỏi live Agent qua `scripts/serve_live_web.py`.
 - **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.
+

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-import sys
-
 sys.path.insert(0, str(ROOT))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from src.chatbot import BaselineChatbot
 from src.core.ollama_provider import OllamaProvider
@@ -20,7 +21,7 @@ PROMPT = (
 
 
 def main() -> None:
-    provider = OllamaProvider(model_name="qwen2.5:3b")
+    provider = OllamaProvider(model_name="qwen3.5:4b")
     chatbot = BaselineChatbot(provider)
     result = chatbot.chat(PROMPT)
 

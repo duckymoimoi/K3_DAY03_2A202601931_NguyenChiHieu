@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="utf-8" />
@@ -37,6 +37,29 @@
 
       <section class="visual-flow" aria-label="System flow">
         <img src="assets/agent-flow.svg" alt="Luồng từ User query tới chatbot, ReAct Agent, Tool Registry, Observation và Final Answer" />
+      </section>
+
+      <section class="live-console" aria-label="Live Agent console">
+        <div class="section-heading">
+          <h2>Hỏi live Agent</h2>
+          <p>Gọi trực tiếp Ollama local <code>qwen3.5:4b</code> qua backend `/api/chat`.</p>
+        </div>
+        <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
+        <div class="live-actions">
+          <button id="askAgent" type="button">Chạy ReAct Agent</button>
+          <button id="askBaseline" type="button">Chạy Baseline</button>
+          <span id="liveStatus">Sẵn sàng</span>
+        </div>
+        <div class="live-output">
+          <article>
+            <h3>Kết quả live</h3>
+            <pre id="liveResult">Chưa có lượt hỏi live.</pre>
+          </article>
+          <article>
+            <h3>Trace / Tool calls</h3>
+            <div id="liveTrace" class="trace-list compact"></div>
+          </article>
+        </div>
       </section>
 
       <section class="case-strip" aria-label="Chọn test case">
@@ -112,7 +135,7 @@
       <section class="rca">
         <div>
           <h2>Sửa lỗi từ V1 sang V2</h2>
-          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection, evidence gate và prerequisite guardrail cho <code>calc_total</code>. Live demo dùng Ollama local <code>qwen2.5:3b</code>.</p>
+          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection, evidence gate và prerequisite guardrail cho <code>calc_total</code>. Live demo dùng Ollama local <code>qwen3.5:4b</code>.</p>
         </div>
         <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Mở RCA artifact</a>
       </section>
@@ -120,3 +143,4 @@
     <script src="app.js"></script>
   </body>
 </html>
+

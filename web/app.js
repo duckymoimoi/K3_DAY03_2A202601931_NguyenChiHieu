@@ -114,6 +114,12 @@ const agentAnswer = document.querySelector("#agentAnswer");
 const agentStatus = document.querySelector("#agentStatus");
 const toolPath = document.querySelector("#toolPath");
 const traceList = document.querySelector("#traceList");
+const liveQuery = document.querySelector("#liveQuery");
+const askAgent = document.querySelector("#askAgent");
+const askBaseline = document.querySelector("#askBaseline");
+const liveStatus = document.querySelector("#liveStatus");
+const liveResult = document.querySelector("#liveResult");
+const liveTrace = document.querySelector("#liveTrace");
 
 function formatTrace(step) {
   if (step.type === "tool") {
@@ -162,3 +168,66 @@ cases.forEach((item, index) => {
   buttonWrap.appendChild(button);
   if (index === 2) renderCase(item);
 });
+
+function renderLiveTrace(trace = []) {
+  liveTrace.innerHTML = "";
+  if (!trace.length) {
+    liveTrace.innerHTML = "<p>Không có trace.</p>";
+    return;
+  }
+
+  trace.forEach((step) => {
+    const node = document.createElement("article");
+    node.className = `trace-step ${step.type === "tool" ? "tool" : ""}`;
+    const title = step.type === "tool" ? step.tool : step.content?.startsWith("Final Answer") ? "Final Answer" : "LLM";
+    const body = step.type === "tool" ? JSON.stringify(step.observation, null, 2) : step.content;
+    node.innerHTML = `<div><strong>Step ${step.step} · ${step.type}</strong><span>${title || ""}</span></div><pre>${body || ""}</pre>`;
+    liveTrace.appendChild(node);
+  });
+}
+
+async function runLive(mode) {
+  const query = liveQuery.value.trim();
+  if (!query) return;
+
+  liveStatus.textContent = mode === "baseline" ? "Đang gọi Baseline..." : "Đang gọi Agent + Tool...";
+  liveResult.textContent = "Đang chờ Ollama local trả lời...";
+  liveTrace.innerHTML = "";
+  askAgent.disabled = true;
+  askBaseline.disabled = true;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, query, model: "qwen3.5:4b" })
+    });
+    const payload = await response.json();
+    if (!payload.ok) throw new Error(payload.message || payload.error || "Live request failed");
+
+    const result = payload.result;
+    liveStatus.textContent = `${payload.model} · ${result.status || result.classification}`;
+    liveResult.textContent = JSON.stringify(
+      {
+        answer: result.answer,
+        status: result.status || result.classification,
+        tool_calls: result.tool_calls,
+        tool_path: result.tool_path || [],
+        missing_evidence: result.missing_evidence || []
+      },
+      null,
+      2
+    );
+    renderLiveTrace(result.trace || []);
+  } catch (error) {
+    liveStatus.textContent = "Lỗi live request";
+    liveResult.textContent = error.message;
+    renderLiveTrace([]);
+  } finally {
+    askAgent.disabled = false;
+    askBaseline.disabled = false;
+  }
+}
+
+askAgent.addEventListener("click", () => runLive("agent"));
+askBaseline.addEventListener("click", () => runLive("baseline"));

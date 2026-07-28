@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-import sys
-
 sys.path.insert(0, str(ROOT))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from src.agent.agent_v2 import ReActAgentV2
 from src.chatbot import BaselineChatbot
@@ -25,7 +26,7 @@ def write_json(path: Path, data) -> None:
 
 
 def main() -> None:
-    provider = OllamaProvider(model_name="qwen2.5:3b")
+    provider = OllamaProvider(model_name="qwen3.5:4b")
 
     baseline = BaselineChatbot(provider).chat(BASELINE_QUERY)
     agent = ReActAgentV2(provider, TOOL_REGISTRY, max_steps=8).run(AGENT_QUERY)
