@@ -95,6 +95,10 @@ class ReActAgent:
         if input_guard:
             return self._guardrail_result(input_guard, prompt, on_event)
 
+        input_guard = self._ambiguous_bulk_checkout_guard(user_input)
+        if input_guard:
+            return self._guardrail_result(input_guard, prompt, on_event)
+
         trace: List[Dict[str, Any]] = []
         tool_path: List[str] = []
         prompt_history: List[str] = [prompt]
@@ -207,6 +211,17 @@ class ReActAgent:
                 continue
 
             tool_name, arguments = action
+            tool_guard = self._tool_mismatch_guard(user_input, tool_name)
+            if tool_guard:
+                return self._guardrail_result(
+                    tool_guard,
+                    prompt,
+                    on_event,
+                    trace=trace,
+                    prompt_history=prompt_history,
+                    tool_path=tool_path,
+                )
+
             current_action = (tool_name, arguments)
             if self.detect_repeated_action and previous_action == current_action:
                 out_of_stock = self._last_out_of_stock(trace)
@@ -583,27 +598,115 @@ class ReActAgent:
             ),
         }
 
+    def _ambiguous_bulk_checkout_guard(self, user_input: str) -> Optional[Dict[str, Any]]:
+        normalized = normalize_text(user_input)
+        if not self._is_checkout_query(normalized):
+            return None
+
+        asks_all_products = any(
+            term in normalized
+            for term in [
+                "tat ca san pham",
+                "toan bo san pham",
+                "tat ca mat hang",
+                "toan bo mat hang",
+                "all products",
+                "everything in shop",
+            ]
+        )
+        if not asks_all_products:
+            return None
+
+        explicit_bulk_mode = any(
+            term in normalized
+            for term in [
+                "moi san pham 1",
+                "moi mat hang 1",
+                "1 cai moi san pham",
+                "toan bo ton kho",
+                "het ton kho",
+            ]
+        )
+        if explicit_bulk_mode:
+            return None
+
+        return {
+            "ok": False,
+            "status": "needs_clarification",
+            "error": "ambiguous_bulk_checkout",
+            "answer": (
+                "Câu này chưa đủ rõ để tính tổng. Bạn muốn mua mỗi sản phẩm còn hàng 1 cái, "
+                "hay mua toàn bộ số lượng đang tồn kho? Mình cần giả định đó trước khi gọi tool tính tiền."
+            ),
+            "missing_text": "Chọn cách hiểu: mỗi sản phẩm còn hàng 1 cái, hoặc toàn bộ tồn kho.",
+        }
+
+    def _tool_mismatch_guard(self, user_input: str, tool_name: str) -> Optional[Dict[str, Any]]:
+        normalized = normalize_text(user_input)
+        if tool_name != "list_store_options":
+            return None
+        if self._store_options_intent(user_input):
+            return None
+        if not self._is_checkout_query(normalized):
+            return None
+
+        return {
+            "ok": False,
+            "status": "tool_guard",
+            "error": "tool_not_aligned_with_task",
+            "answer": (
+                "Mình chưa gọi tool đó vì câu hỏi hiện tại là checkout total, không phải yêu cầu liệt kê catalog. "
+                "Bạn hãy cung cấp sản phẩm, số lượng, mã giảm giá nếu có, nơi giao và package weight để mình tính bằng đúng tool path."
+            ),
+            "missing_text": "Cần thông tin checkout cụ thể thay vì liệt kê dữ liệu cửa hàng.",
+        }
+
+    def _is_checkout_query(self, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in [
+                "mua",
+                "buy",
+                "purchase",
+                "checkout",
+                "tong tien",
+                "bao nhieu tien",
+                "mat bao nhieu",
+                "how much",
+                "total",
+            ]
+        )
+
     def _guardrail_result(
         self,
         guard: Dict[str, Any],
         prompt: str,
         on_event: Optional[Callable[[Dict[str, Any]], None]],
+        trace: Optional[List[Dict[str, Any]]] = None,
+        prompt_history: Optional[List[str]] = None,
+        tool_path: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        trace = [{"step": 0, "type": "input_guard", "guard": guard}]
-        self._emit(on_event, trace[0])
+        if trace is None:
+            trace = [{"step": 0, "type": "input_guard", "guard": guard}]
+        else:
+            trace.append({"step": len(trace) + 1, "type": "input_guard", "guard": guard})
+        self._emit(on_event, trace[-1])
         missing_text = (
             "Hãy nhập bằng thông tin đơn hàng tự nhiên: sản phẩm, số lượng, mã giảm giá, nơi giao và package weight."
         )
         if guard.get("error") == "invalid_quantity":
             missing_text = "Nhập lại số lượng sản phẩm bằng số nguyên dương, ví dụ 1 iPhone hoặc 2 iPhone."
+        if guard.get("missing_text"):
+            missing_text = str(guard["missing_text"])
+        tool_path = tool_path or []
         result = {
             "answer": guard["answer"],
-            "status": "input_guard",
+            "status": guard.get("status", "input_guard"),
             "trace": trace,
-            "steps": 0,
-            "tool_calls": 0,
-            "tool_path": [],
-            "prompt_history": [prompt],
+            "steps": len(trace),
+            "tool_calls": len(tool_path),
+            "tool_path": tool_path,
+            "prompt_history": prompt_history or [prompt],
             "display": {
                 "type": "guardrail",
                 "sections": {
@@ -611,7 +714,7 @@ class ReActAgent:
                 },
             },
         }
-        logger.log_event("AGENT_END", {"status": result["status"], "steps": 0, "tool_path": []})
+        logger.log_event("AGENT_END", {"status": result["status"], "steps": result["steps"], "tool_path": tool_path})
         self._emit(on_event, {"type": "result", "result": result})
         return result
 

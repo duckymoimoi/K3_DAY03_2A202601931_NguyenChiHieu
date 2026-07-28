@@ -205,6 +205,34 @@ def test_v2_blocks_fractional_product_quantity_before_llm_or_tools():
     assert llm.calls == []
 
 
+def test_v2_asks_clarification_for_ambiguous_all_products_checkout_without_tools():
+    llm = ScriptedLLM(['Action: list_store_options({"include_expired": false})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=4)
+
+    result = agent.run("Nếu muốn mua tất cả sản phẩm của shop đến hà nội mất bao nhiêu tiền")
+
+    assert result["status"] == "needs_clarification"
+    assert result["tool_calls"] == 0
+    assert result["tool_path"] == []
+    assert "mỗi sản phẩm còn hàng 1 cái" in result["answer"]
+    assert "toàn bộ số lượng đang tồn kho" in result["answer"]
+    assert llm.calls == []
+
+
+def test_v2_does_not_execute_listing_tool_for_checkout_question():
+    llm = ScriptedLLM(['Action: list_store_options({"include_expired": false})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=4)
+
+    result = agent.run("Tôi muốn mua 1 iPhone giao Hà Nội hết bao nhiêu tiền")
+
+    assert result["status"] == "tool_guard"
+    assert result["tool_calls"] == 0
+    assert result["tool_path"] == []
+    assert result["trace"][-1]["guard"]["error"] == "tool_not_aligned_with_task"
+    assert "checkout total" in result["answer"]
+    assert len(llm.calls) == 1
+
+
 def test_v2_allows_decimal_package_weight_when_quantity_is_integer():
     agent = ReActAgentV2(
         ScriptedLLM(
