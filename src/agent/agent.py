@@ -93,6 +93,23 @@ class ReActAgent:
         previous_action: Optional[Tuple[str, Dict[str, Any]]] = None
         repeated_recovery_actions: set[Tuple[str, str]] = set()
 
+        checkout_gap = self._checkout_without_shipping_intent(user_input)
+        if checkout_gap:
+            result = self._answer_checkout_without_shipping(
+                user_input=user_input,
+                intent=checkout_gap,
+                trace=trace,
+                tool_path=tool_path,
+                prompt_history=prompt_history,
+                on_event=on_event,
+            )
+            logger.log_event(
+                "AGENT_END",
+                {"status": result["status"], "steps": result["steps"], "tool_path": result["tool_path"]},
+            )
+            self._emit(on_event, {"type": "result", "result": result})
+            return result
+
         store_options_intent = self._store_options_intent(user_input)
         if store_options_intent:
             arguments = {"include_expired": False}
@@ -245,7 +262,7 @@ class ReActAgent:
                 trace.append({"step": step, "type": "observation", "observation": observation})
                 self._emit(on_event, trace[-1])
                 result = {
-                    "answer": "I stopped because the agent repeated the same action without progress.",
+                    "answer": "Mình đã dừng vì Agent lặp lại cùng một tool call mà không tạo thêm evidence mới.",
                     "status": "repeated_action",
                     "trace": trace,
                     "steps": step,
@@ -346,7 +363,7 @@ class ReActAgent:
                 return result
 
         result = {
-            "answer": "I could not complete the task safely within the step limit.",
+            "answer": "Mình chưa thể hoàn tất an toàn trong giới hạn số bước của Agent.",
             "status": "max_steps_exceeded",
             "trace": trace,
             "steps": self.max_steps,
@@ -469,7 +486,7 @@ class ReActAgent:
 
     def _format_out_of_stock_answer(self, stock_observation: Dict[str, Any]) -> str:
         item_name = stock_observation.get("item_name", "This item")
-        return f"{item_name} is out of stock, so I cannot confirm the purchase or calculate a checkout total."
+        return f"{item_name} đang hết hàng, nên mình chưa thể xác nhận đơn mua hoặc tính tổng checkout."
 
     def _format_total_answer(self, total_observation: Dict[str, Any]) -> str:
         total = int(total_observation["total"])
@@ -478,10 +495,212 @@ class ReActAgent:
         shipping_cost = int(total_observation.get("shipping_cost", 0))
         currency = total_observation.get("currency", "VND")
         return (
-            f"Total = {total:,} {currency}. "
-            f"Subtotal {subtotal:,} {currency}, discount {discount_amount:,} {currency}, "
-            f"shipping {shipping_cost:,} {currency}."
+            f"Tổng đơn hàng = {total:,} {currency}. "
+            f"Tạm tính hàng {subtotal:,} {currency}, giảm giá {discount_amount:,} {currency}, "
+            f"phí ship {shipping_cost:,} {currency}."
         )
+
+    def _checkout_without_shipping_intent(self, user_input: str) -> Optional[Dict[str, Any]]:
+        normalized = normalize_text(user_input)
+        checkout_total = any(term in normalized for term in ["total", "how much", "bao nhieu", "tong tien", "tinh tong"])
+        if not checkout_total:
+            return None
+
+        item_name = self._extract_item_name(normalized)
+        if not item_name:
+            return None
+
+        has_shipping_context = any(
+            term in normalized
+            for term in [
+                "ship",
+                "shipping",
+                "giao",
+                "hanoi",
+                "ha noi",
+                "saigon",
+                "ho chi minh",
+                "da nang",
+                "danang",
+                "hai phong",
+                "can tho",
+                "hue",
+                "nha trang",
+            ]
+        )
+        if has_shipping_context:
+            return None
+
+        return {
+            "item_name": item_name,
+            "quantity": self._extract_quantity(normalized, item_name),
+            "coupon_code": self._extract_coupon_code(normalized),
+        }
+
+    def _extract_item_name(self, normalized: str) -> Optional[str]:
+        item_aliases = [
+            ("studio display", "Studio Display"),
+            ("magic keyboard", "Magic Keyboard"),
+            ("apple watch", "Apple Watch"),
+            ("airpods pro", "AirPods Pro"),
+            ("airpods", "AirPods Pro"),
+            ("airpod", "AirPods Pro"),
+            ("macbook", "MacBook"),
+            ("iphone", "iPhone"),
+            ("ipad", "iPad"),
+        ]
+        for alias, item_name in item_aliases:
+            if alias in normalized:
+                return item_name
+        return None
+
+    def _extract_coupon_code(self, normalized: str) -> Optional[str]:
+        for code in ["winner", "legacy", "student", "welcome5", "vip20"]:
+            if code in normalized:
+                return code.upper()
+        return None
+
+    def _extract_quantity(self, normalized: str, item_name: str) -> int:
+        number_pattern = r"(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)"
+        correction_patterns = [
+            rf"\bkhong\s+(?:phai\s+)?{number_pattern}\s*(?:cai|chiec)?\s*(?:{normalize_text(item_name)})?\s*thoi\b",
+            rf"\b(?:sua|doi|chuyen)\s+(?:lai\s+)?(?:thanh\s+)?{number_pattern}\s*(?:cai|chiec)?\b",
+        ]
+        for pattern in correction_patterns:
+            match = re.search(pattern, normalized)
+            if match:
+                return self._quantity_value(match.group(1))
+
+        item_token = normalize_text(item_name).replace("airpods pro", "airpod")
+        match = re.search(rf"\b{number_pattern}\s*(?:cai|chiec)?\s*{re.escape(item_token)}s?\b", normalized)
+        if match:
+            return self._quantity_value(match.group(1))
+        return 1
+
+    def _quantity_value(self, raw_value: str) -> int:
+        if raw_value.isdigit():
+            return int(raw_value)
+        number_words = {
+            "mot": 1,
+            "hai": 2,
+            "ba": 3,
+            "bon": 4,
+            "nam": 5,
+            "sau": 6,
+            "bay": 7,
+            "tam": 8,
+            "chin": 9,
+            "muoi": 10,
+        }
+        return number_words.get(raw_value, 1)
+
+    def _answer_checkout_without_shipping(
+        self,
+        user_input: str,
+        intent: Dict[str, Any],
+        trace: List[Dict[str, Any]],
+        tool_path: List[str],
+        prompt_history: List[str],
+        on_event: Optional[Callable[[Dict[str, Any]], None]],
+    ) -> Dict[str, Any]:
+        stock_args = {"item_name": intent["item_name"]}
+        stock_observation = self._execute_tool("check_stock", stock_args)
+        tool_path.append("check_stock")
+        trace.append(
+            {
+                "step": 1,
+                "type": "tool",
+                "tool": "check_stock",
+                "arguments": stock_args,
+                "observation": stock_observation,
+            }
+        )
+        self._emit(on_event, trace[-1])
+
+        if stock_observation.get("status") == "out_of_stock":
+            return {
+                "answer": self._format_out_of_stock_answer(stock_observation),
+                "status": "final_answer",
+                "trace": trace,
+                "steps": 1,
+                "tool_calls": 1,
+                "tool_path": tool_path,
+                "prompt_history": prompt_history,
+            }
+
+        discount_percent = 0
+        coupon_code = intent.get("coupon_code")
+        if coupon_code:
+            discount_args = {"coupon_code": coupon_code}
+            discount_observation = self._execute_tool("get_discount", discount_args)
+            tool_path.append("get_discount")
+            trace.append(
+                {
+                    "step": 2,
+                    "type": "tool",
+                    "tool": "get_discount",
+                    "arguments": discount_args,
+                    "observation": discount_observation,
+                }
+            )
+            self._emit(on_event, trace[-1])
+            if discount_observation.get("ok") is True:
+                discount_percent = float(discount_observation.get("discount_percent", 0))
+
+        quantity = int(intent["quantity"])
+        price = int(stock_observation.get("price", 0))
+        subtotal = quantity * price
+        discount_amount = int(subtotal * discount_percent / 100)
+        subtotal_after_discount = subtotal - discount_amount
+        item_name = stock_observation.get("item_name", intent["item_name"])
+        answer = (
+            f"Mình đã tính được phần hàng cho {quantity} {item_name}: "
+            f"tạm tính trước phí ship là {subtotal_after_discount:,} VND. "
+            f"Subtotal {subtotal:,} VND, giảm giá {discount_amount:,} VND. "
+            "Bạn gửi thêm nơi giao hàng để mình tính phí ship và chốt tổng cuối."
+        )
+        return {
+            "answer": answer,
+            "status": "needs_shipping_destination",
+            "trace": trace,
+            "steps": len(trace),
+            "tool_calls": len(tool_path),
+            "tool_path": tool_path,
+            "prompt_history": prompt_history,
+            "display": self._partial_checkout_display(
+                item_name=item_name,
+                quantity=quantity,
+                price=price,
+                discount_amount=discount_amount,
+                subtotal=subtotal,
+                subtotal_after_discount=subtotal_after_discount,
+            ),
+        }
+
+    def _partial_checkout_display(
+        self,
+        item_name: str,
+        quantity: int,
+        price: int,
+        discount_amount: int,
+        subtotal: int,
+        subtotal_after_discount: int,
+    ) -> Dict[str, Any]:
+        return {
+            "type": "checkout_partial",
+            "sections": {
+                "total": [
+                    {"label": "Sản phẩm", "value": item_name},
+                    {"label": "Số lượng", "value": str(quantity)},
+                    {"label": "Đơn giá", "value": f"{price:,} VND"},
+                    {"label": "Tạm tính hàng", "value": f"{subtotal:,} VND"},
+                    {"label": "Giảm giá", "value": f"{discount_amount:,} VND"},
+                    {"label": "Tạm tính trước phí ship", "value": f"{subtotal_after_discount:,} VND"},
+                    {"label": "Phí ship", "value": "Cần nơi giao hàng"},
+                ],
+                "missing": ["Nơi giao hàng để tính phí ship và tổng cuối."],
+            },
+        }
 
     def _store_options_intent(self, user_input: str) -> Optional[Dict[str, bool]]:
         normalized = normalize_text(user_input)
@@ -520,10 +739,10 @@ class ReActAgent:
             "type": "checkout_total",
             "sections": {
                 "total": [
-                    {"label": "Total", "value": f"{int(total_observation['total']):,} {total_observation.get('currency', 'VND')}"},
-                    {"label": "Subtotal", "value": f"{int(total_observation.get('subtotal', 0)):,} VND"},
-                    {"label": "Discount", "value": f"{int(total_observation.get('discount_amount', 0)):,} VND"},
-                    {"label": "Shipping", "value": f"{int(total_observation.get('shipping_cost', 0)):,} VND"},
+                    {"label": "Tổng cuối", "value": f"{int(total_observation['total']):,} {total_observation.get('currency', 'VND')}"},
+                    {"label": "Tạm tính hàng", "value": f"{int(total_observation.get('subtotal', 0)):,} VND"},
+                    {"label": "Giảm giá", "value": f"{int(total_observation.get('discount_amount', 0)):,} VND"},
+                    {"label": "Phí ship", "value": f"{int(total_observation.get('shipping_cost', 0)):,} VND"},
                 ]
             },
         }
@@ -559,14 +778,14 @@ class ReActAgent:
         if error == "unsupported_destination":
             supported = ", ".join(observation.get("supported_destinations", []))
             return (
-                f"Shipping is not supported for that destination yet. "
-                f"Supported destinations: {supported}."
+                f"Hiện demo chưa hỗ trợ ship tới điểm đó. "
+                f"Các nơi đang hỗ trợ: {supported}."
             )
         if error == "missing_argument":
             supported = ", ".join(observation.get("supported_destinations", []))
-            suffix = f" Supported destinations: {supported}." if supported else ""
-            return f"I need a shipping destination before calculating shipping.{suffix}"
-        return observation.get("message", "Shipping could not be calculated safely.")
+            suffix = f" Các nơi đang hỗ trợ: {supported}." if supported else ""
+            return f"Mình cần nơi giao hàng trước khi tính phí ship.{suffix}"
+        return observation.get("message", "Mình chưa thể tính phí ship một cách an toàn.")
 
     def _missing_required_tools(
         self,

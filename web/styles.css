@@ -193,6 +193,13 @@ h2 {
   margin-top: 0;
 }
 
+.answer-group.missing {
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff7ed;
+  padding: 10px;
+}
+
 .answer-group h3 {
   margin: 0;
   color: var(--ink);

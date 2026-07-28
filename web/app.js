@@ -50,14 +50,14 @@ function renderResultMessage(target, result) {
   target.textContent = "";
   const display = result?.display;
   if (!display?.sections) {
-    target.textContent = result?.answer || "Không có answer.";
+    target.textContent = result?.answer || "Không có câu trả lời.";
     return;
   }
 
   if (display.sections.total) {
     const group = document.createElement("section");
     group.className = "answer-group total";
-    group.innerHTML = "<h3>Tổng đơn hàng</h3>";
+    group.innerHTML = "<h3>Thông số đơn hàng</h3>";
     const grid = document.createElement("div");
     grid.className = "answer-kv";
     display.sections.total.forEach((item) => {
@@ -79,7 +79,7 @@ function renderResultMessage(target, result) {
       item.innerHTML = `
         <strong>${product.item_name}</strong>
         <span>${formatVnd(product.price)} · ${product.status === "in_stock" ? "còn hàng" : "hết hàng"}</span>
-        <small>Stock: ${product.stock} · Weight: ${product.weight_kg} kg</small>
+        <small>Tồn kho: ${product.stock} · Khối lượng: ${product.weight_kg} kg</small>
       `;
       group.appendChild(item);
     });
@@ -111,9 +111,22 @@ function renderResultMessage(target, result) {
       item.className = "answer-row";
       item.innerHTML = `
         <strong>${option.destination}</strong>
-        <span>Base ${formatVnd(option.base_cost)} + ${formatVnd(option.per_kg)}/kg</span>
-        <small>ETA: ${option.estimated_days} ngày</small>
+        <span>Phí cố định ${formatVnd(option.base_cost)} + ${formatVnd(option.per_kg)}/kg</span>
+        <small>Dự kiến: ${option.estimated_days} ngày</small>
       `;
+      group.appendChild(item);
+    });
+    target.appendChild(group);
+  }
+
+  if (display.sections.missing) {
+    const group = document.createElement("section");
+    group.className = "answer-group missing";
+    group.innerHTML = "<h3>Cần bổ sung</h3>";
+    display.sections.missing.forEach((line) => {
+      const item = document.createElement("article");
+      item.className = "answer-row compact";
+      item.textContent = line;
       group.appendChild(item);
     });
     target.appendChild(group);
@@ -154,7 +167,7 @@ function flowInfo(event) {
     const isFinal = event.content?.startsWith("Final Answer");
     return {
       kind: isFinal ? "final" : "llm",
-      title: isFinal ? "Final draft" : "LLM",
+      title: isFinal ? "Bản nháp cuối" : "LLM",
       meta: `${event.latency_ms || 0} ms`,
       summary: isFinal ? "Model đề xuất câu trả lời cuối." : "Model chọn Thought/Action tiếp theo."
     };
@@ -179,14 +192,14 @@ function flowInfo(event) {
   if (event.type === "result") {
     return {
       kind: "final",
-      title: "Done",
+      title: "Hoàn tất",
       meta: event.result?.status || event.result?.classification || "result",
       summary: event.result?.answer || "Hoàn tất request."
     };
   }
   return {
     kind: "warning",
-    title: "Error",
+    title: "Lỗi",
     meta: event.error || "",
     summary: event.message || "Request lỗi."
   };

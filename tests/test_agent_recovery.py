@@ -147,7 +147,7 @@ def test_out_of_stock_observation_turns_repeated_stock_call_into_final_answer():
 
     assert result["status"] == "final_answer"
     assert result["tool_path"] == ["calc_shipping", "check_stock"]
-    assert "MacBook is out of stock" in result["answer"]
+    assert "MacBook đang hết hàng" in result["answer"]
 
 
 def test_v2_out_of_scope_question_stops_before_llm_or_tools():
@@ -210,6 +210,21 @@ def test_v2_lists_only_shipping_prices_for_shipping_price_question_without_llm()
     assert llm.calls == []
 
 
+def test_v2_checkout_without_shipping_destination_asks_for_missing_slot_without_llm():
+    llm = ScriptedLLM(['Action: check_stock({"item_name": "iPhone"})'])
+    agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=3)
+
+    result = agent.run("Tính tổng 2 iphone mã winner. Không 1 iphone thôi")
+
+    assert result["status"] == "needs_shipping_destination"
+    assert result["tool_path"] == ["check_stock", "get_discount"]
+    assert result["display"]["sections"]["missing"] == ["Nơi giao hàng để tính phí ship và tổng cuối."]
+    assert "1 iPhone" in result["answer"]
+    assert "22,500,000 VND" in result["answer"]
+    assert "nơi giao hàng" in result["answer"]
+    assert llm.calls == []
+
+
 def test_v2_stops_safely_when_shipping_destination_is_unsupported():
     agent = ReActAgentV2(
         ScriptedLLM(['Action: calc_shipping({"weight": 0.8, "destination": "Phu Quoc"})']),
@@ -221,5 +236,5 @@ def test_v2_stops_safely_when_shipping_destination_is_unsupported():
 
     assert result["status"] == "safe_fallback"
     assert result["tool_path"] == ["calc_shipping"]
-    assert "not supported" in result["answer"]
+    assert "chưa hỗ trợ ship" in result["answer"]
     assert "Da Nang" in result["answer"]
