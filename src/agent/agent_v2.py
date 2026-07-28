@@ -27,6 +27,8 @@ class ReActAgentV2(ReActAgent):
             "Use the observation to answer, ask for missing information, or stop safely.\n"
             "V2 evidence gate: for checkout totals, Final Answer is allowed only after the required tool evidence exists.\n"
             "After calc_total returns ok=true, write Final Answer immediately; do not call calc_total again.\n"
+            "For purchase questions, check_stock should happen before shipping or total calculation. "
+            "If check_stock returns out_of_stock, write Final Answer immediately and do not call more tools.\n"
             "For live local models: output exactly one Action line, wait for Observation, then decide the next step.\n"
         )
 

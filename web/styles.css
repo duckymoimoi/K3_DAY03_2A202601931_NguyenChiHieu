@@ -25,7 +25,7 @@ body {
 }
 
 .shell {
-  width: min(1180px, calc(100vw - 32px));
+  width: min(1480px, calc(100vw - 24px));
   margin: 0 auto;
   padding: 28px 0 40px;
 }
@@ -233,23 +233,24 @@ h3 {
 
 .graph-board {
   display: flex;
-  min-height: 168px;
+  min-height: 220px;
   gap: 18px;
   align-items: center;
   margin-top: 14px;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fafc;
-  padding: 16px;
+  padding: 24px 24px 44px;
 }
 
 .graph-node {
   position: relative;
   display: grid;
   place-items: center;
-  flex: 0 0 132px;
-  height: 82px;
+  flex: 0 0 154px;
+  height: 92px;
   border: 2px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -304,9 +305,9 @@ h3 {
   position: absolute;
   z-index: 10;
   left: 0;
-  top: 90px;
-  width: min(420px, 80vw);
-  max-height: 260px;
+  top: 102px;
+  width: min(640px, calc(100vw - 48px));
+  max-height: 360px;
   overflow: auto;
   margin: 0;
   border: 1px solid var(--line);
@@ -321,8 +322,34 @@ h3 {
   line-height: 1.45;
 }
 
-.graph-node:hover .node-detail {
+.graph-node:hover .node-detail,
+.graph-node:focus-within .node-detail {
   display: block;
+}
+
+.graph-detail-panel {
+  min-height: 132px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e5eefb;
+  padding: 14px;
+}
+
+.graph-detail-panel strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.graph-detail-panel pre {
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .final-answer {

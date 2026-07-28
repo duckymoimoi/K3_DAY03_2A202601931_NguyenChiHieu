@@ -96,3 +96,24 @@ def test_repeated_calc_total_after_success_returns_grounded_final_answer():
     assert result["status"] == "final_answer"
     assert result["tool_path"] == ["check_stock", "get_discount", "calc_shipping", "calc_total"]
     assert "45,038,000 VND" in result["answer"]
+
+
+def test_out_of_stock_observation_turns_repeated_stock_call_into_final_answer():
+    repeated_stock = 'Action: check_stock({"item_name": "MacBook"})'
+    agent = ReActAgentV2(
+        ScriptedLLM(
+            [
+                'Action: calc_shipping({"weight": 2.0, "destination": "Saigon"})',
+                repeated_stock,
+                repeated_stock,
+            ]
+        ),
+        TOOL_REGISTRY,
+        max_steps=4,
+    )
+
+    result = agent.run("Can I buy 1 MacBook and ship to Saigon? How much?")
+
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["calc_shipping", "check_stock"]
+    assert "MacBook is out of stock" in result["answer"]

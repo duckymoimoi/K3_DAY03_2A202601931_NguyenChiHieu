@@ -133,6 +133,22 @@ class ReActAgent:
             tool_name, arguments = action
             current_action = (tool_name, arguments)
             if self.detect_repeated_action and previous_action == current_action:
+                out_of_stock = self._last_out_of_stock(trace)
+                if out_of_stock:
+                    final_answer = self._format_out_of_stock_answer(out_of_stock)
+                    result = {
+                        "answer": final_answer,
+                        "status": "final_answer",
+                        "trace": trace,
+                        "steps": step,
+                        "tool_calls": len(tool_path),
+                        "tool_path": tool_path,
+                        "prompt_history": prompt_history,
+                    }
+                    logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                    self._emit(on_event, {"type": "result", "result": result})
+                    return result
+
                 grounded_total = self._last_successful_total(trace)
                 if tool_name == "calc_total" and grounded_total:
                     final_answer = self._format_total_answer(grounded_total)
@@ -304,6 +320,19 @@ class ReActAgent:
             if observation.get("ok") is True and "total" in observation:
                 return observation
         return None
+
+    def _last_out_of_stock(self, trace: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        for step in reversed(trace):
+            if step.get("type") != "tool" or step.get("tool") != "check_stock":
+                continue
+            observation = step.get("observation", {})
+            if observation.get("status") == "out_of_stock":
+                return observation
+        return None
+
+    def _format_out_of_stock_answer(self, stock_observation: Dict[str, Any]) -> str:
+        item_name = stock_observation.get("item_name", "This item")
+        return f"{item_name} is out of stock, so I cannot confirm the purchase or calculate a checkout total."
 
     def _format_total_answer(self, total_observation: Dict[str, Any]) -> str:
         total = int(total_observation["total"])

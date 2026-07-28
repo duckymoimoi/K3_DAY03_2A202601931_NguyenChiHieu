@@ -130,6 +130,8 @@ const activeModel = document.querySelector("#activeModel");
 const activeStatus = document.querySelector("#activeStatus");
 const activeTools = document.querySelector("#activeTools");
 const providerStatus = document.querySelector("#providerStatus");
+const graphDetailTitle = document.querySelector("#graphDetailTitle");
+const graphDetailContent = document.querySelector("#graphDetailContent");
 
 function formatTrace(step) {
   if (step.type === "tool") {
@@ -224,13 +226,22 @@ function appendGraphNode(event) {
   const item = nodeInfo(event);
   const node = document.createElement("article");
   node.className = `graph-node ${item.kind}`;
+  node.tabIndex = 0;
   node.innerHTML = `
     <span>${item.title}</span>
     <strong>${item.meta}</strong>
     <pre class="node-detail">${item.detail}</pre>
   `;
+  const showDetail = () => {
+    graphDetailTitle.textContent = `${item.title} · ${item.meta}`;
+    graphDetailContent.textContent = item.detail || "Không có chi tiết.";
+  };
+  node.addEventListener("mouseenter", showDetail);
+  node.addEventListener("focus", showDetail);
+  node.addEventListener("click", showDetail);
   liveGraph.appendChild(node);
   node.scrollIntoView({ behavior: "smooth", inline: "end", block: "nearest" });
+  showDetail();
 }
 
 function updateSummary(event) {
@@ -266,6 +277,8 @@ async function runLive(mode) {
   liveStatus.textContent = mode === "baseline" ? "Đang gọi Baseline..." : "Đang gọi Agent + Tool...";
   liveResult.textContent = "Đang chạy...";
   liveGraph.innerHTML = "";
+  graphDetailTitle.textContent = "Chi tiết node";
+  graphDetailContent.textContent = "Graph đang chạy...";
   activeStatus.textContent = "running";
   activeTools.textContent = "-";
   askAgent.disabled = true;
