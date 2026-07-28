@@ -11,56 +11,63 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Lab 03 · Chatbot vs ReAct Agent</p>
-          <h1>Bảng theo dõi luồng xử lý e-commerce</h1>
+          <h1>Live Agent demo e-commerce</h1>
         </div>
-        <div class="status-pill">Demo deterministic</div>
+        <div class="status-pill" id="providerStatus">Groq API</div>
       </header>
-
-      <section class="metrics" aria-label="Evaluation metrics">
-        <div>
-          <span>Baseline success</span>
-          <strong id="baselineSuccess">40%</strong>
-        </div>
-        <div>
-          <span>Agent V2 success</span>
-          <strong id="agentSuccess">100%</strong>
-        </div>
-        <div>
-          <span>Steps trung bình</span>
-          <strong id="avgSteps">2.4</strong>
-        </div>
-        <div>
-          <span>Tool calls trung bình</span>
-          <strong id="avgTools">1.4</strong>
-        </div>
-      </section>
-
-      <section class="visual-flow" aria-label="System flow">
-        <img src="assets/agent-flow.svg" alt="Luồng từ User query tới chatbot, ReAct Agent, Tool Registry, Observation và Final Answer" />
-      </section>
 
       <section class="live-console" aria-label="Live Agent console">
         <div class="section-heading">
           <h2>Hỏi live Agent</h2>
-          <p>Gọi trực tiếp Ollama local <code>qwen3.5:4b</code> qua backend `/api/chat`.</p>
+          <p>Gọi Groq API qua backend `/api/chat/stream`, graph cập nhật theo từng bước.</p>
         </div>
         <textarea id="liveQuery">Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Package weight là 0.8 kg. Tổng tiền là bao nhiêu?</textarea>
         <div class="live-actions">
+          <select id="providerSelect" aria-label="Chọn provider">
+            <option value="groq" selected>Groq API</option>
+            <option value="ollama">Ollama local</option>
+          </select>
           <button id="askAgent" type="button">Chạy ReAct Agent</button>
           <button id="askBaseline" type="button">Chạy Baseline</button>
           <span id="liveStatus">Sẵn sàng</span>
         </div>
-        <div class="live-output">
-          <article>
-            <h3>Kết quả live</h3>
-            <pre id="liveResult">Chưa có lượt hỏi live.</pre>
-          </article>
-          <article>
-            <h3>Trace / Tool calls</h3>
-            <div id="liveTrace" class="trace-list compact"></div>
-          </article>
+        <div class="live-summary">
+          <div><span>Provider</span><strong id="activeProvider">groq</strong></div>
+          <div><span>Model</span><strong id="activeModel">llama-3.1-8b-instant</strong></div>
+          <div><span>Status</span><strong id="activeStatus">idle</strong></div>
+          <div><span>Tool path</span><strong id="activeTools">-</strong></div>
+        </div>
+        <div class="graph-board" id="liveGraph" aria-label="Live execution graph"></div>
+        <div class="final-answer">
+          <h3>Final answer</h3>
+          <p id="liveResult">Chưa có lượt hỏi live.</p>
         </div>
       </section>
+
+      <details class="archive-section">
+        <summary>Dữ liệu và quy trình thực nghiệm cũ</summary>
+        <section class="metrics" aria-label="Evaluation metrics">
+          <div>
+            <span>Baseline success</span>
+            <strong id="baselineSuccess">40%</strong>
+          </div>
+          <div>
+            <span>Agent V2 success</span>
+            <strong id="agentSuccess">100%</strong>
+          </div>
+          <div>
+            <span>Steps trung bình</span>
+            <strong id="avgSteps">2.4</strong>
+          </div>
+          <div>
+            <span>Tool calls trung bình</span>
+            <strong id="avgTools">1.4</strong>
+          </div>
+        </section>
+
+        <section class="visual-flow" aria-label="System flow">
+          <img src="assets/agent-flow.svg" alt="Luồng từ User query tới chatbot, ReAct Agent, Tool Registry, Observation và Final Answer" />
+        </section>
 
       <section class="case-strip" aria-label="Chọn test case">
         <div class="section-heading">
@@ -139,6 +146,7 @@
         </div>
         <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Mở RCA artifact</a>
       </section>
+      </details>
     </main>
     <script src="app.js"></script>
   </body>

@@ -12,7 +12,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from src.agent.agent_v2 import ReActAgentV2
 from src.chatbot import BaselineChatbot
-from src.core.ollama_provider import OllamaProvider
+from src.core.groq_provider import GroqProvider
 from src.tools import TOOL_REGISTRY
 
 
@@ -26,15 +26,15 @@ def write_json(path: Path, data) -> None:
 
 
 def main() -> None:
-    provider = OllamaProvider(model_name="qwen3.5:4b")
+    provider = GroqProvider()
 
     baseline = BaselineChatbot(provider).chat(BASELINE_QUERY)
     agent = ReActAgentV2(provider, TOOL_REGISTRY, max_steps=8).run(AGENT_QUERY)
 
     demo = {
-        "provider": "ollama",
+        "provider": "groq",
         "model": provider.model_name,
-        "runs_local": True,
+        "runs_local": False,
         "baseline_query": BASELINE_QUERY,
         "agent_query": AGENT_QUERY,
         "baseline_result": baseline,
@@ -44,7 +44,7 @@ def main() -> None:
         and agent["status"] == "final_answer"
         and "45,038,000" in agent["answer"],
         "system_signals": [
-            "Live System Demo bằng Ollama local",
+            "Live System Demo bằng Groq API",
             "Failure Handling: evidence gate, repeated-action detection, calc_total prerequisite",
             "Tool mở rộng: calc_total và search_policy",
             "Monitoring: token, latency, cost estimate trong live trace",

@@ -59,7 +59,8 @@ flowchart LR
 ### 2.3 LLM Provider
 
 - **Evaluation deterministic**: `ScriptedLLM`
-- **Live local smoke test**: Ollama `qwen3.5:4b` qua `src/core/ollama_provider.py`
+- **Live API demo**: Groq API qua `src/core/groq_provider.py`, cấu hình bằng `.env`
+- **Local fallback**: Ollama `qwen3.5:4b` qua `src/core/ollama_provider.py`
 - **Provider mở rộng**: OpenAI, Gemini và local GGUF được giữ trong `src/core/`
 
 ## 3. Telemetry và kết quả đánh giá
@@ -89,16 +90,15 @@ Tóm tắt từ `artifacts/evaluation/summary.json`:
 - **Smallest V2 fix**: Dừng an toàn khi cùng một `Tool` và arguments bị lặp lại mà không tạo thêm bằng chứng mới.
 - **Regression command**: `python -m pytest tests/test_agent_recovery.py -q`
 
-### Live local Ollama finding
+### Live API finding
 
-Đã chạy Ollama local `qwen3.5:4b` bằng hai script:
+Đã chạy live demo bằng Groq API qua script:
 
 ```bash
-python scripts/run_ollama_smoke.py
-python scripts/run_ollama_agent_smoke.py
+python scripts/run_live_demo.py
 ```
 
-Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Ollama local `qwen3.5:4b` đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
+Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Groq API đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
 
 ## 5. Bằng chứng kỹ thuật bổ sung
 

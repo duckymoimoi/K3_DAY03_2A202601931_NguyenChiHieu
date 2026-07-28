@@ -1,11 +1,11 @@
 {
-  "provider": "ollama",
-  "model": "qwen3.5:4b",
-  "runs_local": true,
+  "provider": "groq",
+  "model": "llama-3.1-8b-instant",
+  "runs_local": false,
   "baseline_query": "Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Tổng tiền là bao nhiêu?",
   "agent_query": "I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?",
   "baseline_result": {
-    "answer": "Để tính toán tổng tiền chính xác, tôi cần thông tin sau: số lượng iPhone hiện có trong kho, giá bán của từng chiếc iPhone tại thời điểm này, mã giảm giá WINNER có còn hiệu lực không và phí vận chuyển đến Hà Nội cụ thể là bao nhiêu. Tôi không thể truy cập hệ thống để kiểm tra các dữ liệu động này nên chưa thể đưa ra con số tổng tiền cuối cùng cho bạn.",
+    "answer": "Tôi không thể cung cấp thông tin chính xác về tổng tiền vì tôi không có quyền truy cập vào thông tin về tồn kho, giá, mã giảm giá, phí giao hàng và các chi tiết khác cần thiết để tính toán tổng tiền. Để biết thông tin chính xác, bạn cần kiểm tra trực tiếp với nhà bán hàng hoặc truy cập trang web của họ để xem thông tin về sản phẩm và dịch vụ.",
     "llm_calls": 1,
     "tool_calls": 0,
     "grounded": false,
@@ -17,28 +17,28 @@
       "final_total"
     ],
     "usage": {
-      "prompt_tokens": 218,
-      "completion_tokens": 739,
-      "total_tokens": 957
+      "prompt_tokens": 232,
+      "completion_tokens": 84,
+      "total_tokens": 316
     },
-    "latency_ms": 16821,
-    "provider": "ollama"
+    "latency_ms": 894,
+    "provider": "groq"
   },
   "agent_result": {
-    "answer": "The total cost for buying 2 iPhones using code WINNER and shipping to Hanoi (weight 0.8 kg) is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND with a 10% discount applied via the WINNER coupon, plus 38,000 VND shipping cost to Hanoi (estimated delivery: 1 day).",
+    "answer": "Total = 45,038,000 VND. Subtotal 50,000,000 VND, discount 5,000,000 VND, shipping 38,000 VND.",
     "status": "final_answer",
     "trace": [
       {
         "step": 1,
         "type": "llm",
-        "content": "Thought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})",
+        "content": "Action: check_stock({\"item_name\": \"iPhone\"})",
         "usage": {
-          "prompt_tokens": 579,
-          "completion_tokens": 1481,
-          "total_tokens": 2060
+          "prompt_tokens": 580,
+          "completion_tokens": 12,
+          "total_tokens": 592
         },
-        "latency_ms": 31377,
-        "provider": "ollama"
+        "latency_ms": 311,
+        "provider": "groq"
       },
       {
         "step": 1,
@@ -59,14 +59,14 @@
       {
         "step": 2,
         "type": "llm",
-        "content": "Thought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})",
+        "content": "Action: get_discount({\"coupon_code\": \"WINNER\"})",
         "usage": {
-          "prompt_tokens": 677,
-          "completion_tokens": 213,
-          "total_tokens": 890
+          "prompt_tokens": 637,
+          "completion_tokens": 13,
+          "total_tokens": 650
         },
-        "latency_ms": 9115,
-        "provider": "ollama"
+        "latency_ms": 242,
+        "provider": "groq"
       },
       {
         "step": 2,
@@ -85,14 +85,14 @@
       {
         "step": 3,
         "type": "llm",
-        "content": "Thought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})",
+        "content": "Action: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})",
         "usage": {
-          "prompt_tokens": 767,
-          "completion_tokens": 203,
-          "total_tokens": 970
+          "prompt_tokens": 677,
+          "completion_tokens": 20,
+          "total_tokens": 697
         },
-        "latency_ms": 10229,
-        "provider": "ollama"
+        "latency_ms": 303,
+        "provider": "groq"
       },
       {
         "step": 3,
@@ -113,14 +113,14 @@
       {
         "step": 4,
         "type": "llm",
-        "content": "Thought: I have gathered all required data (iPhone price 25M VND per item, WINNER coupon valid for 10% off, shipping cost 38K VND). Now I need to calculate the final total using these values with qty=2 items.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
+        "content": "Action: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
         "usage": {
-          "prompt_tokens": 880,
-          "completion_tokens": 255,
-          "total_tokens": 1135
+          "prompt_tokens": 734,
+          "completion_tokens": 37,
+          "total_tokens": 771
         },
-        "latency_ms": 11658,
-        "provider": "ollama"
+        "latency_ms": 293,
+        "provider": "groq"
       },
       {
         "step": 4,
@@ -148,14 +148,14 @@
       {
         "step": 5,
         "type": "llm",
-        "content": "Final Answer: The total cost for buying 2 iPhones using code WINNER and shipping to Hanoi (weight 0.8 kg) is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND with a 10% discount applied via the WINNER coupon, plus 38,000 VND shipping cost to Hanoi (estimated delivery: 1 day).",
+        "content": "Action: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
         "usage": {
-          "prompt_tokens": 1107,
-          "completion_tokens": 261,
-          "total_tokens": 1368
+          "prompt_tokens": 869,
+          "completion_tokens": 37,
+          "total_tokens": 906
         },
-        "latency_ms": 12707,
-        "provider": "ollama"
+        "latency_ms": 318,
+        "provider": "groq"
       }
     ],
     "steps": 5,
@@ -168,15 +168,15 @@
     ],
     "prompt_history": [
       "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}\n\nThought: I have gathered all required data (iPhone price 25M VND per item, WINNER coupon valid for 10% off, shipping cost 38K VND). Now I need to calculate the final total using these values with qty=2 items.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": true, \"item_quantity\": 2, \"price_per_item\": 25000000, \"subtotal\": 50000000, \"discount_percent\": 10.0, \"discount_amount\": 5000000, \"shipping_cost\": 38000, \"total\": 45038000, \"currency\": \"VND\", \"formula\": \"(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost\"}"
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}\n\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": true, \"item_quantity\": 2, \"price_per_item\": 25000000, \"subtotal\": 50000000, \"discount_percent\": 10.0, \"discount_amount\": 5000000, \"shipping_cost\": 38000, \"total\": 45038000, \"currency\": \"VND\", \"formula\": \"(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost\"}"
     ]
   },
   "demo_passed": true,
   "system_signals": [
-    "Live System Demo bằng Ollama local",
+    "Live System Demo bằng Groq API",
     "Failure Handling: evidence gate, repeated-action detection, calc_total prerequisite",
     "Tool mở rộng: calc_total và search_policy",
     "Monitoring: token, latency, cost estimate trong live trace"

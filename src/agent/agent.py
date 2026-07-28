@@ -1,6 +1,7 @@
+import copy
 import json
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.core.llm_provider import LLMProvider
 from src.telemetry.logger import logger
@@ -59,7 +60,7 @@ class ReActAgent:
         - For static policy or working-hours questions, answer directly with Final Answer.
         """
 
-    def run(self, user_input: str) -> Dict[str, Any]:
+    def run(self, user_input: str, on_event: Optional[Callable[[Dict[str, Any]], None]] = None) -> Dict[str, Any]:
         logger.log_event(
             "AGENT_START",
             {"input": user_input, "model": self.llm.model_name, "version": self.version},
@@ -84,6 +85,7 @@ class ReActAgent:
                     "provider": llm_result.get("provider", "unknown") if isinstance(llm_result, dict) else "unknown",
                 }
             )
+            self._emit(on_event, trace[-1])
 
             final_answer = self.parse_final_answer(raw_output)
             if final_answer:
@@ -96,6 +98,7 @@ class ReActAgent:
                         "missing_tools": missing_tools,
                     }
                     trace.append({"step": step, "type": "observation", "observation": observation})
+                    self._emit(on_event, trace[-1])
                     prompt = self._append_observation(prompt, raw_output, observation)
                     prompt_history.append(prompt)
                     continue
@@ -110,6 +113,7 @@ class ReActAgent:
                     "prompt_history": prompt_history,
                 }
                 logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
                 return result
 
             action = self.parse_action(raw_output)
@@ -121,6 +125,7 @@ class ReActAgent:
                     "raw_output": raw_output,
                 }
                 trace.append({"step": step, "type": "observation", "observation": observation})
+                self._emit(on_event, trace[-1])
                 prompt = self._append_observation(prompt, raw_output, observation)
                 prompt_history.append(prompt)
                 continue
@@ -128,6 +133,22 @@ class ReActAgent:
             tool_name, arguments = action
             current_action = (tool_name, arguments)
             if self.detect_repeated_action and previous_action == current_action:
+                grounded_total = self._last_successful_total(trace)
+                if tool_name == "calc_total" and grounded_total:
+                    final_answer = self._format_total_answer(grounded_total)
+                    result = {
+                        "answer": final_answer,
+                        "status": "final_answer",
+                        "trace": trace,
+                        "steps": step,
+                        "tool_calls": len(tool_path),
+                        "tool_path": tool_path,
+                        "prompt_history": prompt_history,
+                    }
+                    logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                    self._emit(on_event, {"type": "result", "result": result})
+                    return result
+
                 observation = {
                     "ok": False,
                     "error": "repeated_action",
@@ -136,6 +157,7 @@ class ReActAgent:
                     "arguments": arguments,
                 }
                 trace.append({"step": step, "type": "observation", "observation": observation})
+                self._emit(on_event, trace[-1])
                 result = {
                     "answer": "I stopped because the agent repeated the same action without progress.",
                     "status": "repeated_action",
@@ -146,6 +168,7 @@ class ReActAgent:
                     "prompt_history": prompt_history,
                 }
                 logger.log_event("AGENT_END", {"status": result["status"], "steps": step, "tool_path": tool_path})
+                self._emit(on_event, {"type": "result", "result": result})
                 return result
 
             previous_action = current_action
@@ -165,6 +188,7 @@ class ReActAgent:
                     "observation": observation,
                 }
             )
+            self._emit(on_event, trace[-1])
             prompt = self._append_observation(prompt, self._executed_action_text(raw_output), observation)
             prompt_history.append(prompt)
 
@@ -178,7 +202,12 @@ class ReActAgent:
             "prompt_history": prompt_history,
         }
         logger.log_event("AGENT_END", {"status": result["status"], "steps": self.max_steps, "tool_path": tool_path})
+        self._emit(on_event, {"type": "result", "result": result})
         return result
+
+    def _emit(self, on_event: Optional[Callable[[Dict[str, Any]], None]], event: Dict[str, Any]) -> None:
+        if on_event:
+            on_event(copy.deepcopy(event))
 
     def parse_action(self, text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
         match = re.search(r"Action:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\((\{.*?\})\)", text, re.DOTALL)
@@ -266,6 +295,27 @@ class ReActAgent:
             "message": "calc_total requires grounded stock, coupon, and shipping observations first.",
             "missing_tools": missing_tools,
         }
+
+    def _last_successful_total(self, trace: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        for step in reversed(trace):
+            if step.get("type") != "tool" or step.get("tool") != "calc_total":
+                continue
+            observation = step.get("observation", {})
+            if observation.get("ok") is True and "total" in observation:
+                return observation
+        return None
+
+    def _format_total_answer(self, total_observation: Dict[str, Any]) -> str:
+        total = int(total_observation["total"])
+        subtotal = int(total_observation.get("subtotal", 0))
+        discount_amount = int(total_observation.get("discount_amount", 0))
+        shipping_cost = int(total_observation.get("shipping_cost", 0))
+        currency = total_observation.get("currency", "VND")
+        return (
+            f"Total = {total:,} {currency}. "
+            f"Subtotal {subtotal:,} {currency}, discount {discount_amount:,} {currency}, "
+            f"shipping {shipping_cost:,} {currency}."
+        )
 
     def _missing_required_tools(
         self,

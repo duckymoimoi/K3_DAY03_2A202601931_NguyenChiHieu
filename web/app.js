@@ -119,7 +119,13 @@ const askAgent = document.querySelector("#askAgent");
 const askBaseline = document.querySelector("#askBaseline");
 const liveStatus = document.querySelector("#liveStatus");
 const liveResult = document.querySelector("#liveResult");
-const liveTrace = document.querySelector("#liveTrace");
+const liveGraph = document.querySelector("#liveGraph");
+const providerSelect = document.querySelector("#providerSelect");
+const activeProvider = document.querySelector("#activeProvider");
+const activeModel = document.querySelector("#activeModel");
+const activeStatus = document.querySelector("#activeStatus");
+const activeTools = document.querySelector("#activeTools");
+const providerStatus = document.querySelector("#providerStatus");
 
 function formatTrace(step) {
   if (step.type === "tool") {
@@ -169,21 +175,84 @@ cases.forEach((item, index) => {
   if (index === 2) renderCase(item);
 });
 
-function renderLiveTrace(trace = []) {
-  liveTrace.innerHTML = "";
-  if (!trace.length) {
-    liveTrace.innerHTML = "<p>Không có trace.</p>";
+function nodeInfo(event) {
+  if (event.type === "start") {
+    return { kind: "start", title: "Start", meta: event.provider, detail: JSON.stringify(event, null, 2) };
+  }
+  if (event.type === "llm") {
+    const isFinal = event.content?.startsWith("Final Answer");
+    return {
+      kind: isFinal ? "final" : "llm",
+      title: isFinal ? "Final draft" : "LLM",
+      meta: `${event.latency_ms || 0}ms`,
+      detail: event.content || ""
+    };
+  }
+  if (event.type === "tool") {
+    const ok = event.observation?.ok === false ? "error" : "ok";
+    return {
+      kind: ok === "ok" ? "tool" : "warning",
+      title: event.tool,
+      meta: ok,
+      detail: JSON.stringify({ arguments: event.arguments, observation: event.observation }, null, 2)
+    };
+  }
+  if (event.type === "observation") {
+    return {
+      kind: "warning",
+      title: event.observation?.error || "Observation",
+      meta: "guardrail",
+      detail: JSON.stringify(event.observation, null, 2)
+    };
+  }
+  if (event.type === "result") {
+    return {
+      kind: "final",
+      title: "Done",
+      meta: event.result?.status || event.result?.classification || "result",
+      detail: JSON.stringify(event.result, null, 2)
+    };
+  }
+  return { kind: "warning", title: "Error", meta: event.error || "", detail: event.message || JSON.stringify(event) };
+}
+
+function appendGraphNode(event) {
+  const item = nodeInfo(event);
+  const node = document.createElement("article");
+  node.className = `graph-node ${item.kind}`;
+  node.innerHTML = `
+    <span>${item.title}</span>
+    <strong>${item.meta}</strong>
+    <pre class="node-detail">${item.detail}</pre>
+  `;
+  liveGraph.appendChild(node);
+  node.scrollIntoView({ behavior: "smooth", inline: "end", block: "nearest" });
+}
+
+function updateSummary(event) {
+  if (event.type === "start") {
+    activeProvider.textContent = event.provider;
+    activeModel.textContent = event.model;
+    activeStatus.textContent = "running";
+    activeTools.textContent = "-";
+    providerStatus.textContent = event.provider === "groq" ? "Groq API" : "Ollama local";
     return;
   }
-
-  trace.forEach((step) => {
-    const node = document.createElement("article");
-    node.className = `trace-step ${step.type === "tool" ? "tool" : ""}`;
-    const title = step.type === "tool" ? step.tool : step.content?.startsWith("Final Answer") ? "Final Answer" : "LLM";
-    const body = step.type === "tool" ? JSON.stringify(step.observation, null, 2) : step.content;
-    node.innerHTML = `<div><strong>Step ${step.step} · ${step.type}</strong><span>${title || ""}</span></div><pre>${body || ""}</pre>`;
-    liveTrace.appendChild(node);
-  });
+  if (event.type === "tool") {
+    const current = activeTools.textContent === "-" ? [] : activeTools.textContent.split(" → ");
+    current.push(event.tool);
+    activeTools.textContent = current.join(" → ");
+    activeStatus.textContent = event.observation?.ok === false ? "guardrail" : "tool";
+    return;
+  }
+  if (event.type === "llm") {
+    activeStatus.textContent = event.content?.startsWith("Final Answer") ? "answering" : "thinking";
+    return;
+  }
+  if (event.type === "result") {
+    activeStatus.textContent = event.result?.status || event.result?.classification || "done";
+    liveResult.textContent = event.result?.answer || "Không có answer.";
+  }
 }
 
 async function runLive(mode) {
@@ -191,38 +260,43 @@ async function runLive(mode) {
   if (!query) return;
 
   liveStatus.textContent = mode === "baseline" ? "Đang gọi Baseline..." : "Đang gọi Agent + Tool...";
-  liveResult.textContent = "Đang chờ Ollama local trả lời...";
-  liveTrace.innerHTML = "";
+  liveResult.textContent = "Đang chạy...";
+  liveGraph.innerHTML = "";
+  activeStatus.textContent = "running";
+  activeTools.textContent = "-";
   askAgent.disabled = true;
   askBaseline.disabled = true;
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/api/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, query, model: "qwen3.5:4b" })
+      body: JSON.stringify({ mode, query, provider: providerSelect.value })
     });
-    const payload = await response.json();
-    if (!payload.ok) throw new Error(payload.message || payload.error || "Live request failed");
+    if (!response.ok && !response.body) throw new Error("Live request failed");
 
-    const result = payload.result;
-    liveStatus.textContent = `${payload.model} · ${result.status || result.classification}`;
-    liveResult.textContent = JSON.stringify(
-      {
-        answer: result.answer,
-        status: result.status || result.classification,
-        tool_calls: result.tool_calls,
-        tool_path: result.tool_path || [],
-        missing_evidence: result.missing_evidence || []
-      },
-      null,
-      2
-    );
-    renderLiveTrace(result.trace || []);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        appendGraphNode(event);
+        updateSummary(event);
+        if (event.type === "error") throw new Error(event.message || event.error);
+      }
+    }
+    liveStatus.textContent = "Hoàn tất";
   } catch (error) {
     liveStatus.textContent = "Lỗi live request";
     liveResult.textContent = error.message;
-    renderLiveTrace([]);
+    appendGraphNode({ type: "error", error: "request_failed", message: error.message });
   } finally {
     askAgent.disabled = false;
     askBaseline.disabled = false;
@@ -231,3 +305,16 @@ async function runLive(mode) {
 
 askAgent.addEventListener("click", () => runLive("agent"));
 askBaseline.addEventListener("click", () => runLive("baseline"));
+
+async function loadHealth() {
+  try {
+    const response = await fetch("/api/health");
+    const payload = await response.json();
+    activeModel.textContent = payload.model || activeModel.textContent;
+    activeProvider.textContent = payload.provider || activeProvider.textContent;
+  } catch {
+    providerStatus.textContent = "Backend offline";
+  }
+}
+
+loadHealth();

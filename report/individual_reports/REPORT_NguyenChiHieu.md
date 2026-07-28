@@ -13,6 +13,7 @@
 - Thêm unit tests cho chatbot baseline, Tool, ReAct loop, recovery và web UI.
 - Thêm script deterministic evaluation: `scripts/run_lab_evaluation.py`.
 - Thêm `OllamaProvider` và smoke scripts cho model local `qwen3.5:4b`.
+- Thêm `GroqProvider` để chạy live demo nhanh qua API OpenAI-compatible.
 - Thêm live system demo `scripts/run_live_demo.py`, monitoring artifact và ablation artifact.
 - Xây web UI tĩnh trong `web/`.
 
@@ -28,7 +29,7 @@
 
 ## III. Bằng chứng kỹ thuật cá nhân
 
-- **Live system demo**: `python scripts/run_live_demo.py` tạo `artifacts/live/live_system_demo.json`, trong đó Baseline trả `safe_fallback` và Agent trả `45,038,000 VND`.
+- **Live system demo**: `python scripts/run_live_demo.py` gọi Groq API để tạo `artifacts/live/live_system_demo.json`, trong đó Baseline trả `safe_fallback` và Agent trả `45,038,000 VND`.
 - **Tool mở rộng**: thêm `calc_total` để tính checkout total có công thức rõ ràng và `search_policy` để search policy nội bộ.
 - **Failure Handling**: Agent chặn repeated-action, chặn final answer sớm và chặn `calc_total` khi chưa đủ Observation.
 - **Monitoring**: `artifacts/monitoring/live_monitoring_summary.json` theo dõi tokens, latency, token ratio và cost estimate demo.
