@@ -39,12 +39,9 @@ Máy đã có Ollama và model `qwen2.5:3b`, nên có thể chạy smoke test b�
 ```bash
 python scripts/run_ollama_smoke.py
 python scripts/run_ollama_agent_smoke.py
-python scripts/run_live_demo.py
 ```
 
 Lưu ý: bộ chấm deterministic vẫn dùng `ScriptedLLM`. Ollama chỉ là live smoke test, kết quả có thể thay đổi theo model.
-
-`scripts/run_live_demo.py` là demo end-to-end dùng Ollama local `qwen2.5:3b`: Baseline Chatbot trả `safe_fallback`, còn ReAct Agent V2 gọi Tool để lấy bằng chứng và trả tổng tiền `45,038,000 VND`.
 
 ## Thành phần đã hoàn thiện
 
@@ -58,7 +55,6 @@ Lưu ý: bộ chấm deterministic vẫn dùng `ScriptedLLM`. Ollama chỉ là l
 - Artifacts evaluation: `artifacts/evaluation/`
 - Success trace và failure trace: `artifacts/traces/`
 - Live Ollama artifacts: `artifacts/live/`
-- Bonus artifacts: `artifacts/bonus/`
 - Web UI: `web/index.html`
 
 ## Web UI
@@ -77,19 +73,4 @@ UI hiển thị 5 test cases, kết quả so sánh Baseline Chatbot và ReAct Ag
 - ReAct Agent V2: dùng `Tool` để lấy bằng chứng trước khi trả lời các câu hỏi checkout.
 - V2 có thêm guardrail:
   - chặn lặp cùng một `Action`;
-  - chặn `Final Answer` sớm khi chưa đủ `Tool evidence`;
-  - chặn `calc_total` nếu chưa có Observation từ `check_stock`, `get_discount` và `calc_shipping`.
-
-## Điểm bonus có thể claim
-
-- **Live System Demo**: `artifacts/live/live_system_demo.json`, sinh bằng `python scripts/run_live_demo.py`.
-- **Extra Monitoring**: `artifacts/bonus/monitoring_summary.json` có tokens, latency, token ratio và cost estimate demo.
-- **Extra Tools**: `calc_total` để tính checkout total có cấu trúc và `search_policy` để search policy nội bộ.
-- **Failure Handling**: repeated-action detector, evidence gate và `calc_total` prerequisite guardrail.
-- **Ablation Experiment**: `artifacts/bonus/ablation_guardrail.json` so sánh V1 chưa có guardrail với V2 đã sửa.
-
-Sinh lại toàn bộ bonus artifacts:
-
-```bash
-python scripts/generate_bonus_artifacts.py
-```
+  - chặn `Final Answer` sớm khi chưa đủ `Tool evidence`.
