@@ -1,3 +1,4 @@
+import unicodedata
 from typing import Any, Dict, Optional
 
 from src.core.llm_provider import LLMProvider
@@ -71,7 +72,7 @@ class BaselineChatbot:
         return response
 
     def _missing_dynamic_evidence(self, user_input: str) -> list[str]:
-        normalized = user_input.lower()
+        normalized = self._normalize_text(user_input)
         evidence = []
 
         if any(term in normalized for term in ["iphone", "ipad", "macbook", "stock", "ton kho", "price", "gia"]):
@@ -84,3 +85,11 @@ class BaselineChatbot:
             evidence.append("final_total")
 
         return evidence
+
+    def _normalize_text(self, text: str) -> str:
+        without_accents = "".join(
+            char
+            for char in unicodedata.normalize("NFD", text.lower())
+            if unicodedata.category(char) != "Mn"
+        )
+        return without_accents

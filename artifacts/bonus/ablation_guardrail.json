@@ -1,0 +1,21 @@
+{
+  "experiment": "So sánh V1 chưa có repeated-action guardrail với V2 đã có guardrail",
+  "input": "I want to buy 2 iPhones using code WINNER and ship to Hanoi. Total?",
+  "v1": {
+    "status": "max_steps_exceeded",
+    "tool_path": [
+      "check_stock",
+      "check_stock",
+      "check_stock"
+    ],
+    "tool_calls": 3
+  },
+  "v2": {
+    "status": "repeated_action",
+    "tool_path": [
+      "check_stock"
+    ],
+    "tool_calls": 1
+  },
+  "result": "V2 dừng sau 1 Tool call với repeated_action thay vì lãng phí 3 Tool calls rồi max_steps."
+}

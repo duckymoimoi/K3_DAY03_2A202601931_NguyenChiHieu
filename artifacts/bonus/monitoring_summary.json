@@ -1,0 +1,38 @@
+{
+  "source": "artifacts/live/live_system_demo.json",
+  "baseline_ollama": {
+    "prompt_tokens": 213,
+    "completion_tokens": 77,
+    "total_tokens": 290,
+    "completion_to_prompt_ratio": 0.3615,
+    "cost_estimate_usd": 0.0029
+  },
+  "agent_ollama": {
+    "prompt_tokens": 4613,
+    "completion_tokens": 229,
+    "total_tokens": 4842,
+    "latency_ms": 16336,
+    "completion_to_prompt_ratio": 0.0496,
+    "cost_estimate_usd": 0.04842
+  },
+  "deterministic_summary": {
+    "baseline_chatbot": {
+      "case_count": 5,
+      "success_rate": 0.4,
+      "safe_fallback_rate": 0.6,
+      "average_steps": 1.0,
+      "average_tool_calls": 0.0
+    },
+    "react_agent_v2": {
+      "case_count": 5,
+      "success_rate": 1.0,
+      "safe_fallback_rate": 0.0,
+      "average_steps": 2.4,
+      "average_tool_calls": 1.4
+    }
+  },
+  "notes": [
+    "Cost estimate dùng công thức demo trong telemetry: total_tokens / 1000 * 0.01.",
+    "Latency là tổng latency của các LLM calls trong live demo."
+  ]
+}

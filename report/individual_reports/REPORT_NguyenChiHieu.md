@@ -7,12 +7,13 @@
 ## I. Đóng góp kỹ thuật
 
 - Implement `Baseline Chatbot` trong `src/chatbot/chatbot.py`.
-- Implement các Tool deterministic trong `src/tools/tools.py`.
+- Implement các Tool deterministic trong `src/tools/tools.py`, gồm `check_stock`, `get_discount`, `calc_shipping`, `calc_total` và `search_policy`.
 - Implement `ReAct Agent V1` trong `src/agent/agent.py`.
 - Implement `ReAct Agent V2` với repeated-action guardrail trong `src/agent/agent_v2.py`.
 - Thêm unit tests cho chatbot baseline, Tool, ReAct loop, recovery và web UI.
 - Thêm script deterministic evaluation: `scripts/run_lab_evaluation.py`.
 - Thêm `OllamaProvider` và smoke scripts cho model local `qwen2.5:3b`.
+- Thêm live system demo `scripts/run_live_demo.py` và bonus artifacts trong `artifacts/bonus/`.
 - Xây web UI tĩnh trong `web/`.
 
 ## II. Debugging case study
@@ -22,16 +23,24 @@
 - **First divergence**: Bước 2 lặp lại `check_stock`.
 - **Chẩn đoán**: Loop có `max_steps`, nhưng chưa có repeated-action detector.
 - **Cách sửa**: `ReActAgentV2` dừng an toàn khi cùng một Tool và arguments bị lặp lại mà không có bằng chứng mới.
-- **Phát hiện từ live model**: Ollama `qwen2.5:3b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate cho câu hỏi checkout.
+- **Phát hiện từ live model**: Ollama `qwen2.5:3b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate và `calc_total` prerequisite guardrail cho câu hỏi checkout.
 - **Bằng chứng kiểm thử**: `python -m pytest tests/test_agent_recovery.py -q`
 
-## III. Bài học cá nhân: Chatbot vs ReAct Agent
+## III. Bonus evidence cá nhân
+
+- **Live System Demo**: `python scripts/run_live_demo.py` tạo `artifacts/live/live_system_demo.json`, trong đó Baseline trả `safe_fallback` và Agent trả `45,038,000 VND`.
+- **Extra Tools**: thêm `calc_total` để tính checkout total có công thức rõ ràng và `search_policy` để search policy nội bộ.
+- **Failure Handling**: Agent chặn repeated-action, chặn final answer sớm và chặn `calc_total` khi chưa đủ Observation.
+- **Extra Monitoring**: `artifacts/bonus/monitoring_summary.json` theo dõi tokens, latency, token ratio và cost estimate demo.
+- **Ablation Experiment**: `artifacts/bonus/ablation_guardrail.json` chứng minh V2 giảm lỗi loop so với V1.
+
+## IV. Bài học cá nhân: Chatbot vs ReAct Agent
 
 Chatbot rẻ và nhanh hơn cho câu hỏi tĩnh như chính sách đổi trả hoặc giờ làm việc, vì không cần dữ liệu động. Với câu hỏi checkout, chatbot không nên tự bịa tổng tiền vì giá, tồn kho, coupon và shipping đều là dữ liệu cần bằng chứng.
 
 ReAct Agent tốn nhiều bước hơn vì phải gọi Tool, nhưng đổi lại câu trả lời có `Observation` làm bằng chứng. Kết luận quan trọng nhất là Agent không phải lúc nào cũng tốt hơn; Agent đáng dùng khi bài toán cần hành động, kiểm chứng hoặc dữ liệu mới.
 
-## IV. Cải tiến tương lai
+## V. Cải tiến tương lai
 
 - Thêm Pydantic schema cho arguments trước khi gọi Tool.
 - Dùng inventory database và coupon API thật thay vì dữ liệu hardcode.

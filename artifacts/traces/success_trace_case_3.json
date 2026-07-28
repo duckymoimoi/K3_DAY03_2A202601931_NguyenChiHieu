@@ -2,7 +2,14 @@
   {
     "step": 1,
     "type": "llm",
-    "content": "Thought: Need stock and price.\nAction: check_stock({\"item_name\": \"iPhone\"})"
+    "content": "Thought: Need stock and price.\nAction: check_stock({\"item_name\": \"iPhone\"})",
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 20,
+      "total_tokens": 40
+    },
+    "latency_ms": 1,
+    "provider": "scripted"
   },
   {
     "step": 1,
@@ -23,7 +30,14 @@
   {
     "step": 2,
     "type": "llm",
-    "content": "Thought: Need coupon evidence.\nAction: get_discount({\"coupon_code\": \"WINNER\"})"
+    "content": "Thought: Need coupon evidence.\nAction: get_discount({\"coupon_code\": \"WINNER\"})",
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 20,
+      "total_tokens": 40
+    },
+    "latency_ms": 1,
+    "provider": "scripted"
   },
   {
     "step": 2,
@@ -42,7 +56,14 @@
   {
     "step": 3,
     "type": "llm",
-    "content": "Thought: Need shipping fee.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})"
+    "content": "Thought: Need shipping fee.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})",
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 20,
+      "total_tokens": 40
+    },
+    "latency_ms": 1,
+    "provider": "scripted"
   },
   {
     "step": 3,
@@ -63,6 +84,13 @@
   {
     "step": 4,
     "type": "llm",
-    "content": "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND."
+    "content": "Final Answer: Total = (25,000,000 x 2) x 0.9 + 38,000 = 45,038,000 VND.",
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 20,
+      "total_tokens": 40
+    },
+    "latency_ms": 1,
+    "provider": "scripted"
   }
 ]

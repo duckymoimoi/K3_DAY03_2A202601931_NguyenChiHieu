@@ -50,8 +50,10 @@ class ReActAgent:
         Final Answer: your final response.
 
         Rules:
+        - Return exactly one Action per response, then stop.
         - Never invent tool names. Use only the listed tools.
         - Never write Observation yourself; the application will append it.
+        - Never include multiple Action lines in one response.
         - Do not claim checkout success until tool evidence supports stock, price,
           coupon status, shipping fee, and final total.
         - For static policy or working-hours questions, answer directly with Final Answer.
@@ -72,7 +74,16 @@ class ReActAgent:
         for step in range(1, self.max_steps + 1):
             llm_result = self.llm.generate(prompt, system_prompt=self.get_system_prompt())
             raw_output = llm_result.get("content", "") if isinstance(llm_result, dict) else str(llm_result)
-            trace.append({"step": step, "type": "llm", "content": raw_output})
+            trace.append(
+                {
+                    "step": step,
+                    "type": "llm",
+                    "content": raw_output,
+                    "usage": llm_result.get("usage", {}) if isinstance(llm_result, dict) else {},
+                    "latency_ms": llm_result.get("latency_ms", 0) if isinstance(llm_result, dict) else 0,
+                    "provider": llm_result.get("provider", "unknown") if isinstance(llm_result, dict) else "unknown",
+                }
+            )
 
             final_answer = self.parse_final_answer(raw_output)
             if final_answer:
@@ -138,7 +149,8 @@ class ReActAgent:
                 return result
 
             previous_action = current_action
-            observation = self._execute_tool(tool_name, arguments)
+            prerequisite_error = self._tool_prerequisite_error(tool_name, user_input, tool_path, trace)
+            observation = prerequisite_error or self._execute_tool(tool_name, arguments)
             if observation.get("ok") is not False:
                 tool_path.append(tool_name)
             else:
@@ -153,7 +165,7 @@ class ReActAgent:
                     "observation": observation,
                 }
             )
-            prompt = self._append_observation(prompt, raw_output, observation)
+            prompt = self._append_observation(prompt, self._executed_action_text(raw_output), observation)
             prompt_history.append(prompt)
 
         result = {
@@ -195,6 +207,15 @@ class ReActAgent:
             f"Observation: {json.dumps(observation, ensure_ascii=False)}"
         )
 
+    def _executed_action_text(self, text: str) -> str:
+        match = re.search(r"Action:\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(\{.*?\}\)", text, re.DOTALL)
+        if not match:
+            return text
+        trimmed = text[: match.end()]
+        if text[match.end() :].strip():
+            trimmed += "\n[Application note: output after the first Action was ignored because only one Action is executed per step.]"
+        return trimmed
+
     def _execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         available_tools = {tool["name"]: tool for tool in self.tools}
         tool = available_tools.get(tool_name)
@@ -224,6 +245,27 @@ class ReActAgent:
                 "tool": tool_name,
                 "arguments": arguments,
             }
+
+    def _tool_prerequisite_error(
+        self,
+        tool_name: str,
+        user_input: str,
+        tool_path: List[str],
+        trace: List[Dict[str, Any]],
+    ) -> Optional[Dict[str, Any]]:
+        if tool_name != "calc_total":
+            return None
+
+        missing_tools = self._missing_required_tools(user_input, tool_path, trace)
+        if not missing_tools:
+            return None
+
+        return {
+            "ok": False,
+            "error": "missing_prerequisite_evidence",
+            "message": "calc_total requires grounded stock, coupon, and shipping observations first.",
+            "missing_tools": missing_tools,
+        }
 
     def _missing_required_tools(
         self,

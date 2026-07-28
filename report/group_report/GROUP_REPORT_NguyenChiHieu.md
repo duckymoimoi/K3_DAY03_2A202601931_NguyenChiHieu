@@ -22,6 +22,10 @@ Artifacts:
 - `artifacts/traces/rca_repeated_action.md`
 - `artifacts/live/ollama_smoke.json`
 - `artifacts/live/ollama_agent_smoke.json`
+- `artifacts/live/live_system_demo.json`
+- `artifacts/bonus/monitoring_summary.json`
+- `artifacts/bonus/ablation_guardrail.json`
+- `artifacts/bonus/bonus_scorecard.md`
 
 ## 2. Kiến trúc hệ thống và Tool
 
@@ -50,6 +54,8 @@ flowchart LR
 | `check_stock` | `{"item_name": "iPhone"}` | Tra cứu giá, tồn kho, khối lượng và trạng thái sản phẩm. |
 | `get_discount` | `{"coupon_code": "WINNER"}` | Kiểm tra coupon còn hợp lệ hay không và phần trăm giảm giá. |
 | `calc_shipping` | `{"weight": 0.8, "destination": "Hanoi"}` | Tính phí shipping và số ngày giao hàng. |
+| `calc_total` | `{"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000}` | Tính checkout total có công thức rõ ràng sau khi đã có Observation bắt buộc. |
+| `search_policy` | `{"query": "return policy"}` | Search policy nội bộ cho các câu hỏi chính sách tĩnh. |
 
 ### 2.3 LLM Provider
 
@@ -93,9 +99,19 @@ python scripts/run_ollama_smoke.py
 python scripts/run_ollama_agent_smoke.py
 ```
 
-Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate nên không chấp nhận `Final Answer` khi thiếu bằng chứng. Tuy nhiên model live vẫn tạo format chưa chuẩn và bỏ sót `get_discount`, nên agent dừng an toàn ở `max_steps_exceeded`. Kết quả này được lưu trong `artifacts/live/ollama_agent_smoke.json`.
+Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Ollama local `qwen2.5:3b` đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
 
-## 5. So sánh Chatbot và Agent
+## 5. Bonus evidence
+
+| Hạng mục bonus | Bằng chứng |
+| :--- | :--- |
+| Live System Demo | `python scripts/run_live_demo.py`, artifact `artifacts/live/live_system_demo.json`, trạng thái `demo_passed=true`. |
+| Extra Monitoring | `artifacts/bonus/monitoring_summary.json` ghi tokens, latency, token ratio và cost estimate demo. |
+| Extra Tools | `calc_total` và `search_policy` trong `src/tools/tools.py`, có unit tests trong `tests/test_tools.py`. |
+| Failure Handling | repeated-action detector, evidence gate, `calc_total` prerequisite guardrail, có tests trong `tests/test_agent_recovery.py`. |
+| Ablation Experiment | `artifacts/bonus/ablation_guardrail.json` so sánh V1 lặp Tool với V2 dừng an toàn. |
+
+## 6. So sánh Chatbot và Agent
 
 | Case | Kết quả Chatbot | Kết quả Agent | Nhận xét |
 | :--- | :--- | :--- | :--- |
@@ -105,10 +121,10 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 | MacBook + Saigon | Safe fallback | Dừng sau khi thấy hết hàng | Agent an toàn hơn |
 | iPad + LEGACY + Saigon | Safe fallback | Tính tổng không giảm giá vì coupon hết hạn | Agent tốt hơn |
 
-## 6. Mức sẵn sàng production
+## 7. Mức sẵn sàng production
 
 - **Bảo mật**: `.env`, logs, model files và API keys đã được ignore.
-- **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection và evidence gate.
-- **Observability**: Agent trả về trace và ghi structured logs.
+- **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection, evidence gate và prerequisite guardrail trước khi gọi `calc_total`.
+- **Observability**: Agent trả về trace, ghi structured logs và có bonus monitoring artifact.
 - **UI artifact**: `web/index.html` hiển thị metrics, Tool path và trace timeline.
 - **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.

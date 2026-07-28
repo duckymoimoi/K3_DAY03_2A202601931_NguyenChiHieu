@@ -2,8 +2,29 @@
   "provider": "ollama",
   "model": "qwen2.5:3b",
   "runs_local": true,
-  "query": "I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?",
-  "result": {
+  "baseline_query": "Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Tổng tiền là bao nhiêu?",
+  "agent_query": "I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?",
+  "baseline_result": {
+    "answer": "Để trả lời câu hỏi của bạn, tôi cần biết thông tin về số lượng hàng tồn kho cho hai chiếc iPhone, giá cả, tính hợp lệ của mã code WINNER, phí vận chuyển đến Hà Nội và tổng tiền cuối cùng. Tôi không thể cung cấp những thông tin này mà không có dữ liệu cụ thể từ nhà sản xuất hoặc nhà bán lẻ.",
+    "llm_calls": 1,
+    "tool_calls": 0,
+    "grounded": false,
+    "classification": "safe_fallback",
+    "missing_evidence": [
+      "stock_and_price",
+      "coupon_validity",
+      "shipping_fee",
+      "final_total"
+    ],
+    "usage": {
+      "prompt_tokens": 213,
+      "completion_tokens": 77,
+      "total_tokens": 290
+    },
+    "latency_ms": 3107,
+    "provider": "ollama"
+  },
+  "agent_result": {
     "answer": "Your total for purchasing 2 iPhones with the WINNER coupon and shipping to Hanoi is VND 45,038,000.",
     "status": "final_answer",
     "trace": [
@@ -16,7 +37,7 @@
           "completion_tokens": 46,
           "total_tokens": 606
         },
-        "latency_ms": 3790,
+        "latency_ms": 2772,
         "provider": "ollama"
       },
       {
@@ -49,7 +70,7 @@
           "completion_tokens": 12,
           "total_tokens": 668
         },
-        "latency_ms": 2421,
+        "latency_ms": 2433,
         "provider": "ollama"
       },
       {
@@ -77,7 +98,7 @@
           "completion_tokens": 43,
           "total_tokens": 763
         },
-        "latency_ms": 2839,
+        "latency_ms": 2764,
         "provider": "ollama"
       },
       {
@@ -103,7 +124,7 @@
           "completion_tokens": 46,
           "total_tokens": 828
         },
-        "latency_ms": 2928,
+        "latency_ms": 2798,
         "provider": "ollama"
       },
       {
@@ -131,7 +152,7 @@
           "completion_tokens": 46,
           "total_tokens": 909
         },
-        "latency_ms": 2821,
+        "latency_ms": 2814,
         "provider": "ollama"
       },
       {
@@ -166,7 +187,7 @@
           "completion_tokens": 36,
           "total_tokens": 1068
         },
-        "latency_ms": 2705,
+        "latency_ms": 2755,
         "provider": "ollama"
       }
     ],
@@ -188,5 +209,11 @@
       "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": false, \"error\": \"missing_prerequisite_evidence\", \"message\": \"calc_total requires grounded stock, coupon, and shipping observations first.\", \"missing_tools\": [\"check_stock\", \"get_discount\", \"calc_shipping\"]}\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\n[Application note: output after the first Action was ignored because only one Action is executed per step.]\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\n[Application note: output after the first Action was ignored because only one Action is executed per step.]\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}\n\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": true, \"item_quantity\": 2, \"price_per_item\": 25000000, \"subtotal\": 50000000, \"discount_percent\": 10.0, \"discount_amount\": 5000000, \"shipping_cost\": 38000, \"total\": 45038000, \"currency\": \"VND\", \"formula\": \"(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost\"}"
     ]
   },
-  "note": "Live local Agent V2 smoke test. Deterministic grading artifacts still use ScriptedLLM."
+  "demo_passed": true,
+  "bonus_signals": [
+    "Live System Demo bằng Ollama local",
+    "Failure Handling: evidence gate, repeated-action detection, calc_total prerequisite",
+    "Extra Tools: calc_total và search_policy",
+    "Extra Monitoring: token, latency, cost estimate trong live trace"
+  ]
 }

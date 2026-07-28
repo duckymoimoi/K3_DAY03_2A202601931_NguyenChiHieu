@@ -26,6 +26,7 @@ class ReActAgentV2(ReActAgent):
             + "\nV2 guardrail: if a tool call produced no new path forward, do not repeat the exact same Action. "
             "Use the observation to answer, ask for missing information, or stop safely.\n"
             "V2 evidence gate: for checkout totals, Final Answer is allowed only after the required tool evidence exists.\n"
+            "For live local models: output exactly one Action line, wait for Observation, then decide the next step.\n"
         )
 
     def parse_action(self, text: str) -> Optional[Tuple[str, Dict[str, Any]]]:

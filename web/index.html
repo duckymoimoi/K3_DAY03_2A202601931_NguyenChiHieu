@@ -97,12 +97,22 @@
           <h3>calc_shipping</h3>
           <p>Tính shipping cost và estimated days.</p>
         </div>
+        <div class="tool-card">
+          <span class="tool-dot teal"></span>
+          <h3>calc_total</h3>
+          <p>Tính checkout total sau khi đã có đủ Observation.</p>
+        </div>
+        <div class="tool-card">
+          <span class="tool-dot violet"></span>
+          <h3>search_policy</h3>
+          <p>Search policy nội bộ cho câu hỏi chính sách.</p>
+        </div>
       </section>
 
       <section class="rca">
         <div>
           <h2>Sửa lỗi từ V1 sang V2</h2>
-          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection và evidence gate cho câu hỏi checkout động. Ollama smoke test dùng local <code>qwen2.5:3b</code>.</p>
+          <p>Trace lỗi: V1 lặp <code>check_stock</code> tới khi chạm max_steps. V2 thêm repeated-action detection, evidence gate và prerequisite guardrail cho <code>calc_total</code>. Live demo dùng Ollama local <code>qwen2.5:3b</code>.</p>
         </div>
         <a class="file-link" href="../artifacts/traces/rca_repeated_action.md">Mở RCA artifact</a>
       </section>

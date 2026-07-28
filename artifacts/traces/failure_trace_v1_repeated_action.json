@@ -5,7 +5,14 @@
     {
       "step": 1,
       "type": "llm",
-      "content": "Thought: Need stock.\nAction: check_stock({\"item_name\": \"iPhone\"})"
+      "content": "Thought: Need stock.\nAction: check_stock({\"item_name\": \"iPhone\"})",
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 20,
+        "total_tokens": 40
+      },
+      "latency_ms": 1,
+      "provider": "scripted"
     },
     {
       "step": 1,
@@ -26,7 +33,14 @@
     {
       "step": 2,
       "type": "llm",
-      "content": "Thought: Need stock again.\nAction: check_stock({\"item_name\": \"iPhone\"})"
+      "content": "Thought: Need stock again.\nAction: check_stock({\"item_name\": \"iPhone\"})",
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 20,
+        "total_tokens": 40
+      },
+      "latency_ms": 1,
+      "provider": "scripted"
     },
     {
       "step": 2,
@@ -47,7 +61,14 @@
     {
       "step": 3,
       "type": "llm",
-      "content": "Thought: Still need stock.\nAction: check_stock({\"item_name\": \"iPhone\"})"
+      "content": "Thought: Still need stock.\nAction: check_stock({\"item_name\": \"iPhone\"})",
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 20,
+        "total_tokens": 40
+      },
+      "latency_ms": 1,
+      "provider": "scripted"
     },
     {
       "step": 3,

@@ -7,6 +7,8 @@
   --blue: #2563eb;
   --green: #059669;
   --amber: #d97706;
+  --teal: #0f766e;
+  --violet: #7c3aed;
   --rose: #e11d48;
   --shadow: 0 12px 30px rgba(19, 32, 51, 0.08);
 }
@@ -254,7 +256,7 @@ h3 {
 
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -282,6 +284,14 @@ h3 {
 
 .tool-dot.amber {
   background: var(--amber);
+}
+
+.tool-dot.teal {
+  background: var(--teal);
+}
+
+.tool-dot.violet {
+  background: var(--violet);
 }
 
 .rca {

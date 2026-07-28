@@ -22,6 +22,12 @@ SHIPPING_TABLE = {
     "ho chi minh": {"base_cost": 35_000, "per_kg": 20_000, "estimated_days": 2},
 }
 
+POLICY_DOCS = {
+    "return": "Sản phẩm đủ điều kiện có thể đổi trả trong 7 ngày nếu còn hóa đơn và chưa hư hại do người dùng.",
+    "warranty": "iPhone và iPad có bảo hành demo 12 tháng; phụ kiện có bảo hành demo 6 tháng.",
+    "working_hours": "Cửa hàng demo làm việc từ 8:00 đến 21:00 hằng ngày.",
+}
+
 
 def _error(error: str, message: str, **extra: Any) -> Dict[str, Any]:
     payload = {"ok": False, "error": error, "message": message}
@@ -101,6 +107,68 @@ def calc_shipping(weight: float | int | None = None, destination: str | None = N
     }
 
 
+def calc_total(
+    item_quantity: int | None = None,
+    price_per_item: float | int | None = None,
+    discount_percent: float | int | None = 0,
+    shipping_cost: float | int | None = 0,
+) -> Dict[str, Any]:
+    """Calculate final checkout total from grounded observations."""
+    required = {
+        "item_quantity": item_quantity,
+        "price_per_item": price_per_item,
+        "discount_percent": discount_percent,
+        "shipping_cost": shipping_cost,
+    }
+    missing = [name for name, value in required.items() if value is None]
+    if missing:
+        return _error("missing_argument", "calc_total requires all numeric checkout fields.", required=missing)
+
+    try:
+        quantity = int(item_quantity)
+        price = float(price_per_item)
+        discount = float(discount_percent)
+        shipping = float(shipping_cost)
+    except (TypeError, ValueError):
+        return _error("invalid_argument", "All calc_total inputs must be numeric.", received=required)
+
+    if quantity <= 0 or price < 0 or not 0 <= discount <= 100 or shipping < 0:
+        return _error("invalid_argument", "Quantity, price, discount, or shipping is outside the accepted range.")
+
+    subtotal = int(quantity * price)
+    discount_amount = int(subtotal * discount / 100)
+    total = int(subtotal - discount_amount + shipping)
+    return {
+        "ok": True,
+        "item_quantity": quantity,
+        "price_per_item": int(price),
+        "subtotal": subtotal,
+        "discount_percent": discount,
+        "discount_amount": discount_amount,
+        "shipping_cost": int(shipping),
+        "total": total,
+        "currency": "VND",
+        "formula": "(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost",
+    }
+
+
+def search_policy(query: str | None = None) -> Dict[str, Any]:
+    """Search the demo store policy knowledge base."""
+    if not query or not isinstance(query, str):
+        return _error("missing_argument", "query is required.", required=["query"])
+
+    normalized = query.strip().lower()
+    matches = []
+    for key, text in POLICY_DOCS.items():
+        if key in normalized or any(word in text.lower() for word in normalized.split()):
+            matches.append({"id": key, "text": text})
+
+    if not matches:
+        return _error("policy_not_found", f"No policy document matched '{query}'.")
+
+    return {"ok": True, "query": query, "matches": matches}
+
+
 def _tool(name: str, description: str, func: Callable[..., Dict[str, Any]], input_example: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "name": name,
@@ -128,5 +196,17 @@ TOOL_REGISTRY: List[Dict[str, Any]] = [
         "Read-only shipping calculator. Input: {\"weight\": 0.8, \"destination\": \"Hanoi\"}. Returns shipping_cost and estimated_days.",
         calc_shipping,
         {"weight": 0.8, "destination": "Hanoi"},
+    ),
+    _tool(
+        "calc_total",
+        "Bonus checkout calculator. Input: {\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000}. Returns final VND total.",
+        calc_total,
+        {"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000},
+    ),
+    _tool(
+        "search_policy",
+        "Bonus read-only Search Tool over demo store policy docs. Input: {\"query\": \"return policy\"}. Returns matching policy passages.",
+        search_policy,
+        {"query": "return policy"},
     ),
 ]

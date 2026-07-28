@@ -50,3 +50,26 @@ def test_v2_blocks_premature_final_for_dynamic_checkout_until_tools_are_used():
     assert result["status"] == "final_answer"
     assert result["tool_path"] == ["check_stock", "get_discount", "calc_shipping"]
     assert result["trace"][1]["observation"]["error"] == "premature_final_missing_evidence"
+
+
+def test_calc_total_is_blocked_until_prerequisite_evidence_exists():
+    agent = ReActAgentV2(
+        ScriptedLLM(
+            [
+                'Thought: Try total early.\nAction: calc_total({"item_quantity": 2, "price_per_item": 15000000, "discount_percent": 10, "shipping_cost": 38000})',
+                'Thought: Need stock.\nAction: check_stock({"item_name": "iPhone"})',
+                'Thought: Need coupon.\nAction: get_discount({"coupon_code": "WINNER"})',
+                'Thought: Need shipping.\nAction: calc_shipping({"weight": 0.8, "destination": "Hanoi"})',
+                'Thought: Now total is grounded.\nAction: calc_total({"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000})',
+                "Final Answer: Total = 45,038,000 VND.",
+            ]
+        ),
+        TOOL_REGISTRY,
+        max_steps=6,
+    )
+
+    result = agent.run("I want to buy 2 iPhones using code WINNER and ship to Hanoi. Total?")
+
+    assert result["status"] == "final_answer"
+    assert result["trace"][1]["observation"]["error"] == "missing_prerequisite_evidence"
+    assert result["trace"][-2]["observation"]["total"] == 45_038_000

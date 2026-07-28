@@ -67,3 +67,18 @@ def test_multistep_ecommerce_hook_is_safe_fallback_without_tool_evidence():
         "final_total",
     ]
     assert "cannot calculate a grounded checkout total" in result["answer"]
+
+
+def test_vietnamese_accented_checkout_query_marks_total_as_missing_evidence():
+    llm = FakeLLM(["Không thể tính tổng tiền có bằng chứng nếu chưa gọi Tool."])
+    chatbot = BaselineChatbot(llm)
+
+    result = chatbot.chat("Tôi muốn mua 2 iPhone, dùng mã WINNER và giao tới Hà Nội. Tổng tiền là bao nhiêu?")
+
+    assert result["classification"] == "safe_fallback"
+    assert result["missing_evidence"] == [
+        "stock_and_price",
+        "coupon_validity",
+        "shipping_fee",
+        "final_total",
+    ]

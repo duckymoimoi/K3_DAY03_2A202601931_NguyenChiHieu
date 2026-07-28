@@ -19,7 +19,7 @@ QUERY = "I want to buy 2 iPhones using code WINNER and ship to Hanoi. The packag
 
 def main() -> None:
     provider = OllamaProvider(model_name="qwen2.5:3b")
-    agent = ReActAgentV2(provider, TOOL_REGISTRY, max_steps=5)
+    agent = ReActAgentV2(provider, TOOL_REGISTRY, max_steps=8)
     result = agent.run(QUERY)
 
     artifact = {

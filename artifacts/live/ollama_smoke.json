@@ -20,7 +20,7 @@
       "completion_tokens": 59,
       "total_tokens": 277
     },
-    "latency_ms": 3030,
+    "latency_ms": 3150,
     "provider": "ollama"
   },
   "note": "Live local smoke test only. Deterministic grading artifacts still use ScriptedLLM."
