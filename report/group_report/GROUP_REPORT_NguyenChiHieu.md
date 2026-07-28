@@ -125,27 +125,35 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 | MacBook + Saigon | Safe fallback | Dừng sau khi thấy hết hàng | Agent an toàn hơn |
 | iPad + LEGACY + Saigon | Safe fallback | Tính tổng không giảm giá vì coupon hết hạn | Agent tốt hơn |
 
-## 7. Mức sẵn sàng production
+## 7. Exit ticket 60 giây
 
-- **Bảo mật**: `.env`, logs, model files và API keys đã được ignore.
-- **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection, evidence gate và prerequisite guardrail trước khi gọi `calc_total`.
-- **Observability**: Agent trả về trace, ghi structured logs và có monitoring artifact.
-- **UI artifact**: `web/index.html` hiển thị metrics, Tool path, trace timeline và form hỏi live Agent qua `scripts/serve_live_web.py`.
-- **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.
+1. **Chatbot fail hoặc fallback ở case nào, vì sao?**
 
-## 8. Consistency checklist trước khi nộp
+   Chatbot fallback ở case 3, 4 và 5 vì các câu này cần dữ liệu động: giá, tồn kho, coupon, shipping và tổng tiền. Baseline đúng protocol nên không gọi Tool và không tự bịa số liệu.
 
-| Checklist | Trạng thái | Bằng chứng / command |
-| :--- | :--- | :--- |
-| Tool inventory trong report khớp registry thật | Đạt | `src/tools/tools.py`, mục 2.2 |
-| Flowchart chỉ chứa Tool tồn tại | Đạt | `docs/hybrid_flowchart.mmd` |
-| Provider/model khớp config và trace | Đạt | `GroqProvider`, `artifacts/live/live_system_demo.json` |
-| Số test case khớp script/artifact | Đạt | `python scripts/run_lab_evaluation.py` |
-| Success rate có công thức + raw outcomes | Đạt | `artifacts/evaluation/summary.json`, `raw_result_table.csv` |
-| Chatbot tool calls đúng baseline protocol | Đạt | Baseline `tool_calls=0` trong raw results |
-| Failed trace có first divergence, root cause, fix và regression test | Đạt | `artifacts/traces/rca_repeated_action.md` |
-| Metrics không phải số ước lượng | Đạt | deterministic và live được ghi riêng |
-| Không tuyên bố side effect thật khi Tool là mock | Đạt | Report chỉ nói demo checkout, chưa purchase/payment thật |
-| Trace đã loại secret/PII | Đạt | Không ghi API key; `.env` và `logs/` trong `.gitignore` |
-| Mỗi claim quan trọng có command tái tạo | Đạt | `python -m pytest -q`, `python scripts/run_live_demo.py`, `python scripts/generate_evidence_artifacts.py` |
+2. **Agent đi qua Tool path nào?**
+
+   - Case 1 và 2: không gọi Tool vì là câu hỏi tĩnh.
+   - Case 3: `check_stock -> get_discount -> calc_shipping -> calc_total`.
+   - Case 4: `check_stock`, sau đó dừng vì `MacBook` hết hàng.
+   - Case 5: `check_stock -> get_discount -> calc_shipping -> calc_total`.
+
+3. **Failed trace lệch đầu tiên ở bước nào?**
+
+   Failed trace V1 lệch ở bước 2: thay vì chuyển từ `check_stock` sang kiểm tra coupon, Agent V1 lặp lại `check_stock({"item_name": "iPhone"})`.
+
+4. **V2 thay đổi gì dựa trên trace đó?**
+
+   V2 thêm repeated-action detector để dừng khi cùng một Tool và arguments bị lặp mà không có bằng chứng mới. Sau live test, V2 có thêm evidence gate và prerequisite guardrail cho `calc_total`.
+
+5. **Metric nào tốt lên và trade-off nào xấu đi?**
+
+   Metric tốt lên là Agent V2 đạt 100% success rate trên 5 case deterministic, tool selection đúng hơn, grounding rõ hơn và không có parser/hallucinated-tool error. Trade-off là Agent dùng nhiều bước hơn chatbot: trung bình 2.80 steps và 1.80 Tool calls so với chatbot 1 step và 0 Tool calls.
+
+6. **Command nào tái tạo claim trong report?**
+
+   - `python scripts/run_lab_evaluation.py` tái tạo summary, raw results, raw result table và traces.
+   - `python scripts/run_live_demo.py` tái tạo live demo qua Groq API.
+   - `python scripts/generate_evidence_artifacts.py` tái tạo monitoring và ablation artifacts.
+   - `python -m pytest -q` chạy regression tests.
 
