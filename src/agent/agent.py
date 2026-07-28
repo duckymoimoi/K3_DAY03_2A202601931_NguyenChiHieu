@@ -95,15 +95,27 @@ class ReActAgent:
         if input_guard:
             return self._guardrail_result(input_guard, prompt, on_event)
 
-        input_guard = self._ambiguous_bulk_checkout_guard(user_input)
-        if input_guard:
-            return self._guardrail_result(input_guard, prompt, on_event)
-
         trace: List[Dict[str, Any]] = []
         tool_path: List[str] = []
         prompt_history: List[str] = [prompt]
         previous_action: Optional[Tuple[str, Dict[str, Any]]] = None
         repeated_recovery_actions: set[Tuple[str, str]] = set()
+
+        bulk_checkout = self._bulk_checkout_intent(user_input)
+        if bulk_checkout:
+            result = self._answer_bulk_checkout(
+                intent=bulk_checkout,
+                trace=trace,
+                tool_path=tool_path,
+                prompt_history=prompt_history,
+                on_event=on_event,
+            )
+            logger.log_event(
+                "AGENT_END",
+                {"status": result["status"], "steps": result["steps"], "tool_path": result["tool_path"]},
+            )
+            self._emit(on_event, {"type": "result", "result": result})
+            return result
 
         checkout_gap = self._checkout_without_shipping_intent(user_input)
         if checkout_gap:
@@ -598,7 +610,7 @@ class ReActAgent:
             ),
         }
 
-    def _ambiguous_bulk_checkout_guard(self, user_input: str) -> Optional[Dict[str, Any]]:
+    def _bulk_checkout_intent(self, user_input: str) -> Optional[Dict[str, Any]]:
         normalized = normalize_text(user_input)
         if not self._is_checkout_query(normalized):
             return None
@@ -617,29 +629,29 @@ class ReActAgent:
         if not asks_all_products:
             return None
 
-        explicit_bulk_mode = any(
-            term in normalized
-            for term in [
-                "moi san pham 1",
-                "moi mat hang 1",
-                "1 cai moi san pham",
-                "toan bo ton kho",
-                "het ton kho",
-            ]
-        )
-        if explicit_bulk_mode:
-            return None
-
         return {
-            "ok": False,
-            "status": "needs_clarification",
-            "error": "ambiguous_bulk_checkout",
-            "answer": (
-                "Câu này chưa đủ rõ để tính tổng. Bạn muốn mua mỗi sản phẩm còn hàng 1 cái, "
-                "hay mua toàn bộ số lượng đang tồn kho? Mình cần giả định đó trước khi gọi tool tính tiền."
-            ),
-            "missing_text": "Chọn cách hiểu: mỗi sản phẩm còn hàng 1 cái, hoặc toàn bộ tồn kho.",
+            "destination": self._extract_destination(normalized),
+            "coupon_code": self._extract_coupon_code(normalized),
         }
+
+    def _extract_destination(self, normalized: str) -> Optional[str]:
+        aliases = [
+            ("ha noi", "Hanoi"),
+            ("hanoi", "Hanoi"),
+            ("sai gon", "Saigon"),
+            ("saigon", "Saigon"),
+            ("ho chi minh", "Saigon"),
+            ("da nang", "Da Nang"),
+            ("danang", "Da Nang"),
+            ("hai phong", "Hai Phong"),
+            ("can tho", "Can Tho"),
+            ("hue", "Hue"),
+            ("nha trang", "Nha Trang"),
+        ]
+        for alias, destination in aliases:
+            if alias in normalized:
+                return destination
+        return None
 
     def _tool_mismatch_guard(self, user_input: str, tool_name: str) -> Optional[Dict[str, Any]]:
         normalized = normalize_text(user_input)
@@ -819,6 +831,153 @@ class ReActAgent:
         }
         return number_words.get(raw_value, 1)
 
+    def _answer_bulk_checkout(
+        self,
+        intent: Dict[str, Any],
+        trace: List[Dict[str, Any]],
+        tool_path: List[str],
+        prompt_history: List[str],
+        on_event: Optional[Callable[[Dict[str, Any]], None]],
+    ) -> Dict[str, Any]:
+        options_args = {"include_expired": False}
+        options_observation = self._execute_tool("list_store_options", options_args)
+        tool_path.append("list_store_options")
+        trace.append(
+            {
+                "step": len(trace) + 1,
+                "type": "tool",
+                "tool": "list_store_options",
+                "arguments": options_args,
+                "observation": options_observation,
+            }
+        )
+        self._emit(on_event, trace[-1])
+
+        if options_observation.get("ok") is False:
+            return {
+                "answer": "Mình chưa lấy được inventory của shop nên chưa thể tính tổng.",
+                "status": "safe_fallback",
+                "trace": trace,
+                "steps": len(trace),
+                "tool_calls": len(tool_path),
+                "tool_path": tool_path,
+                "prompt_history": prompt_history,
+            }
+
+        destination = intent.get("destination")
+        if not destination:
+            return {
+                "answer": "Mình đã xác định đây là đơn mua toàn bộ stock còn hàng, nhưng bạn cần cho biết nơi giao để tính phí ship.",
+                "status": "needs_shipping_destination",
+                "trace": trace,
+                "steps": len(trace),
+                "tool_calls": len(tool_path),
+                "tool_path": tool_path,
+                "prompt_history": prompt_history,
+                "display": {
+                    "type": "guardrail",
+                    "sections": {
+                        "products": self._bulk_in_stock_products(options_observation),
+                        "missing": ["Nơi giao hàng để tính phí ship và tổng cuối."],
+                    },
+                },
+            }
+
+        products = self._bulk_in_stock_products(options_observation)
+        subtotal = sum(int(product["price"]) * int(product["stock"]) for product in products)
+        total_units = sum(int(product["stock"]) for product in products)
+        total_weight = round(sum(float(product["weight_kg"]) * int(product["stock"]) for product in products), 2)
+
+        discount_percent = 0.0
+        coupon_code = intent.get("coupon_code")
+        if coupon_code:
+            discount_args = {"coupon_code": coupon_code}
+            discount_observation = self._execute_tool("get_discount", discount_args)
+            tool_path.append("get_discount")
+            trace.append(
+                {
+                    "step": len(trace) + 1,
+                    "type": "tool",
+                    "tool": "get_discount",
+                    "arguments": discount_args,
+                    "observation": discount_observation,
+                }
+            )
+            self._emit(on_event, trace[-1])
+            if discount_observation.get("ok") is True:
+                discount_percent = float(discount_observation.get("discount_percent", 0))
+
+        shipping_args = {"weight": total_weight, "destination": destination}
+        shipping_observation = self._execute_tool("calc_shipping", shipping_args)
+        tool_path.append("calc_shipping")
+        trace.append(
+            {
+                "step": len(trace) + 1,
+                "type": "tool",
+                "tool": "calc_shipping",
+                "arguments": shipping_args,
+                "observation": shipping_observation,
+            }
+        )
+        self._emit(on_event, trace[-1])
+        if shipping_observation.get("ok") is False:
+            return {
+                "answer": self._format_shipping_error_answer(shipping_observation),
+                "status": "safe_fallback",
+                "trace": trace,
+                "steps": len(trace),
+                "tool_calls": len(tool_path),
+                "tool_path": tool_path,
+                "prompt_history": prompt_history,
+            }
+
+        total_args = {
+            "item_quantity": 1,
+            "price_per_item": subtotal,
+            "discount_percent": discount_percent,
+            "shipping_cost": shipping_observation["shipping_cost"],
+        }
+        total_observation = self._execute_tool("calc_total", total_args)
+        total_observation["bulk_units"] = total_units
+        total_observation["bulk_weight"] = total_weight
+        total_observation["bulk_product_count"] = len(products)
+        tool_path.append("calc_total")
+        trace.append(
+            {
+                "step": len(trace) + 1,
+                "type": "tool",
+                "tool": "calc_total",
+                "arguments": total_args,
+                "observation": total_observation,
+            }
+        )
+        self._emit(on_event, trace[-1])
+
+        answer = (
+            f"Mình đã kiểm tra inventory: có {len(products)} dòng sản phẩm còn hàng, tổng {total_units} sản phẩm. "
+            f"Tổng khối lượng là {total_weight:g} kg. "
+            f"Tạm tính hàng {subtotal:,} VND, phí ship tới {shipping_observation['destination']} "
+            f"là {int(shipping_observation['shipping_cost']):,} VND. "
+            f"Tổng cuối = {int(total_observation['total']):,} VND."
+        )
+        return {
+            "answer": answer,
+            "status": "final_answer",
+            "trace": trace,
+            "steps": len(trace),
+            "tool_calls": len(tool_path),
+            "tool_path": tool_path,
+            "prompt_history": prompt_history,
+            "display": self._bulk_total_display(total_observation, shipping_observation, products),
+        }
+
+    def _bulk_in_stock_products(self, options_observation: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return [
+            product
+            for product in options_observation.get("products", [])
+            if product.get("status") == "in_stock" and int(product.get("stock", 0)) > 0
+        ]
+
     def _answer_checkout_without_shipping(
         self,
         user_input: str,
@@ -969,6 +1128,29 @@ class ReActAgent:
                     {"label": "Giảm giá", "value": f"{int(total_observation.get('discount_amount', 0)):,} VND"},
                     {"label": "Phí ship", "value": f"{int(total_observation.get('shipping_cost', 0)):,} VND"},
                 ]
+            },
+        }
+
+    def _bulk_total_display(
+        self,
+        total_observation: Dict[str, Any],
+        shipping_observation: Dict[str, Any],
+        products: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        return {
+            "type": "bulk_checkout_total",
+            "sections": {
+                "total": [
+                    {"label": "Sản phẩm còn hàng", "value": str(total_observation.get("bulk_product_count", len(products)))},
+                    {"label": "Tổng số lượng", "value": str(total_observation.get("bulk_units", 0))},
+                    {"label": "Tổng khối lượng", "value": f"{float(total_observation.get('bulk_weight', 0)):g} kg"},
+                    {"label": "Tạm tính hàng", "value": f"{int(total_observation.get('subtotal', 0)):,} VND"},
+                    {"label": "Giảm giá", "value": f"{int(total_observation.get('discount_amount', 0)):,} VND"},
+                    {"label": "Phí ship", "value": f"{int(total_observation.get('shipping_cost', 0)):,} VND"},
+                    {"label": "Nơi giao", "value": str(shipping_observation.get("destination", ""))},
+                    {"label": "Tổng cuối", "value": f"{int(total_observation['total']):,} {total_observation.get('currency', 'VND')}"},
+                ],
+                "products": products,
             },
         }
 

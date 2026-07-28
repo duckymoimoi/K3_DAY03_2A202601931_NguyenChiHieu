@@ -205,17 +205,19 @@ def test_v2_blocks_fractional_product_quantity_before_llm_or_tools():
     assert llm.calls == []
 
 
-def test_v2_asks_clarification_for_ambiguous_all_products_checkout_without_tools():
+def test_v2_bulk_checkout_all_products_uses_inventory_then_calculates_total():
     llm = ScriptedLLM(['Action: list_store_options({"include_expired": false})'])
     agent = ReActAgentV2(llm, TOOL_REGISTRY, max_steps=4)
 
     result = agent.run("Nếu muốn mua tất cả sản phẩm của shop đến hà nội mất bao nhiêu tiền")
 
-    assert result["status"] == "needs_clarification"
-    assert result["tool_calls"] == 0
-    assert result["tool_path"] == []
-    assert "mỗi sản phẩm còn hàng 1 cái" in result["answer"]
-    assert "toàn bộ số lượng đang tồn kho" in result["answer"]
+    assert result["status"] == "final_answer"
+    assert result["tool_path"] == ["list_store_options", "calc_shipping", "calc_total"]
+    assert result["tool_calls"] == 3
+    assert "tổng 82 sản phẩm" in result["answer"]
+    assert "45.2 kg" in result["answer"]
+    assert "930,982,000 VND" in result["answer"]
+    assert result["display"]["sections"]["total"][1] == {"label": "Tổng số lượng", "value": "82"}
     assert llm.calls == []
 
 
