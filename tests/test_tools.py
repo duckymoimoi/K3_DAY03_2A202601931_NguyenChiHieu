@@ -29,14 +29,14 @@ def test_expired_coupon_returns_no_discount_signal():
     assert result["discount_percent"] == 0
 
 
-def test_bonus_search_policy_tool_returns_policy_matches():
+def test_search_policy_tool_returns_policy_matches():
     result = search_policy("return policy")
 
     assert result["ok"] is True
     assert result["matches"][0]["id"] == "return"
 
 
-def test_bonus_calc_total_tool_returns_grounded_checkout_total():
+def test_calc_total_tool_returns_grounded_checkout_total():
     result = calc_total(
         item_quantity=2,
         price_per_item=25_000_000,

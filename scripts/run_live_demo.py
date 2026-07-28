@@ -43,11 +43,11 @@ def main() -> None:
         and baseline["classification"] == "safe_fallback"
         and agent["status"] == "final_answer"
         and "45,038,000" in agent["answer"],
-        "bonus_signals": [
+        "system_signals": [
             "Live System Demo bằng Ollama local",
             "Failure Handling: evidence gate, repeated-action detection, calc_total prerequisite",
-            "Extra Tools: calc_total và search_policy",
-            "Extra Monitoring: token, latency, cost estimate trong live trace",
+            "Tool mở rộng: calc_total và search_policy",
+            "Monitoring: token, latency, cost estimate trong live trace",
         ],
     }
 

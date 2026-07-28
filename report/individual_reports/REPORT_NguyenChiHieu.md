@@ -13,7 +13,7 @@
 - Thêm unit tests cho chatbot baseline, Tool, ReAct loop, recovery và web UI.
 - Thêm script deterministic evaluation: `scripts/run_lab_evaluation.py`.
 - Thêm `OllamaProvider` và smoke scripts cho model local `qwen3.5:4b`.
-- Thêm live system demo `scripts/run_live_demo.py` và bonus artifacts trong `artifacts/bonus/`.
+- Thêm live system demo `scripts/run_live_demo.py`, monitoring artifact và ablation artifact.
 - Xây web UI tĩnh trong `web/`.
 
 ## II. Debugging case study
@@ -26,13 +26,13 @@
 - **Phát hiện từ live model**: Ollama `qwen3.5:4b` từng cố trả lời tổng tiền khi Tool path chưa hợp lệ, nên V2 có thêm evidence gate và `calc_total` prerequisite guardrail cho câu hỏi checkout.
 - **Bằng chứng kiểm thử**: `python -m pytest tests/test_agent_recovery.py -q`
 
-## III. Bonus evidence cá nhân
+## III. Bằng chứng kỹ thuật cá nhân
 
-- **Live System Demo**: `python scripts/run_live_demo.py` tạo `artifacts/live/live_system_demo.json`, trong đó Baseline trả `safe_fallback` và Agent trả `45,038,000 VND`.
-- **Extra Tools**: thêm `calc_total` để tính checkout total có công thức rõ ràng và `search_policy` để search policy nội bộ.
+- **Live system demo**: `python scripts/run_live_demo.py` tạo `artifacts/live/live_system_demo.json`, trong đó Baseline trả `safe_fallback` và Agent trả `45,038,000 VND`.
+- **Tool mở rộng**: thêm `calc_total` để tính checkout total có công thức rõ ràng và `search_policy` để search policy nội bộ.
 - **Failure Handling**: Agent chặn repeated-action, chặn final answer sớm và chặn `calc_total` khi chưa đủ Observation.
-- **Extra Monitoring**: `artifacts/bonus/monitoring_summary.json` theo dõi tokens, latency, token ratio và cost estimate demo.
-- **Ablation Experiment**: `artifacts/bonus/ablation_guardrail.json` chứng minh V2 giảm lỗi loop so với V1.
+- **Monitoring**: `artifacts/monitoring/live_monitoring_summary.json` theo dõi tokens, latency, token ratio và cost estimate demo.
+- **Ablation Experiment**: `artifacts/experiments/ablation_guardrail.json` chứng minh V2 giảm lỗi loop so với V1.
 
 ## IV. Bài học cá nhân: Chatbot vs ReAct Agent
 

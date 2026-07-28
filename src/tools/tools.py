@@ -199,13 +199,13 @@ TOOL_REGISTRY: List[Dict[str, Any]] = [
     ),
     _tool(
         "calc_total",
-        "Bonus checkout calculator. Input: {\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000}. Returns final VND total.",
+        "Checkout calculator. Input: {\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000}. Returns final VND total.",
         calc_total,
         {"item_quantity": 2, "price_per_item": 25000000, "discount_percent": 10, "shipping_cost": 38000},
     ),
     _tool(
         "search_policy",
-        "Bonus read-only Search Tool over demo store policy docs. Input: {\"query\": \"return policy\"}. Returns matching policy passages.",
+        "Read-only Search Tool over demo store policy docs. Input: {\"query\": \"return policy\"}. Returns matching policy passages.",
         search_policy,
         {"query": "return policy"},
     ),

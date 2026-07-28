@@ -21,23 +21,23 @@
       "completion_tokens": 739,
       "total_tokens": 957
     },
-    "latency_ms": 17316,
+    "latency_ms": 16821,
     "provider": "ollama"
   },
   "agent_result": {
-    "answer": "The total for 2 iPhones with WINNER coupon (10% off) shipped to Hanoi is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND before the 5,000,000 VND discount and plus 38,000 VND shipping cost.",
+    "answer": "The total cost for buying 2 iPhones using code WINNER and shipping to Hanoi (weight 0.8 kg) is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND with a 10% discount applied via the WINNER coupon, plus 38,000 VND shipping cost to Hanoi (estimated delivery: 1 day).",
     "status": "final_answer",
     "trace": [
       {
         "step": 1,
         "type": "llm",
-        "content": "Thought: Need to gather evidence about iPhone pricing before calculating totals with discount and shipping. Starting by checking stock/price of iPhones.\n\nAction: check_stock({\"item_name\": \"iPhone\"})",
+        "content": "Thought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})",
         "usage": {
-          "prompt_tokens": 581,
-          "completion_tokens": 194,
-          "total_tokens": 775
+          "prompt_tokens": 579,
+          "completion_tokens": 1481,
+          "total_tokens": 2060
         },
-        "latency_ms": 6377,
+        "latency_ms": 31377,
         "provider": "ollama"
       },
       {
@@ -59,13 +59,13 @@
       {
         "step": 2,
         "type": "llm",
-        "content": "Thought: Need to validate WINNER coupon code and calculate shipping cost for 0.8kg package to Hanoi before computing final total. Starting with coupon verification.\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})",
+        "content": "Thought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})",
         "usage": {
-          "prompt_tokens": 673,
-          "completion_tokens": 246,
-          "total_tokens": 919
+          "prompt_tokens": 677,
+          "completion_tokens": 213,
+          "total_tokens": 890
         },
-        "latency_ms": 7367,
+        "latency_ms": 9115,
         "provider": "ollama"
       },
       {
@@ -85,13 +85,13 @@
       {
         "step": 3,
         "type": "llm",
-        "content": "Thought: Need to calculate shipping cost for 0.8kg package to Hanoi before computing final total with all evidence gathered.\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})",
+        "content": "Thought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})",
         "usage": {
-          "prompt_tokens": 750,
-          "completion_tokens": 295,
-          "total_tokens": 1045
+          "prompt_tokens": 767,
+          "completion_tokens": 203,
+          "total_tokens": 970
         },
-        "latency_ms": 8349,
+        "latency_ms": 10229,
         "provider": "ollama"
       },
       {
@@ -113,13 +113,13 @@
       {
         "step": 4,
         "type": "llm",
-        "content": "Thought: All evidence gathered - iPhone price, coupon validity/discount percentage, and shipping cost are confirmed. Now calculating final total for checkout.\n\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
+        "content": "Thought: I have gathered all required data (iPhone price 25M VND per item, WINNER coupon valid for 10% off, shipping cost 38K VND). Now I need to calculate the final total using these values with qty=2 items.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})",
         "usage": {
-          "prompt_tokens": 839,
-          "completion_tokens": 272,
-          "total_tokens": 1111
+          "prompt_tokens": 880,
+          "completion_tokens": 255,
+          "total_tokens": 1135
         },
-        "latency_ms": 7961,
+        "latency_ms": 11658,
         "provider": "ollama"
       },
       {
@@ -148,13 +148,13 @@
       {
         "step": 5,
         "type": "llm",
-        "content": "Final Answer: The total for 2 iPhones with WINNER coupon (10% off) shipped to Hanoi is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND before the 5,000,000 VND discount and plus 38,000 VND shipping cost.",
+        "content": "Final Answer: The total cost for buying 2 iPhones using code WINNER and shipping to Hanoi (weight 0.8 kg) is **45,038,000 VND**. This includes a subtotal of 50,000,000 VND with a 10% discount applied via the WINNER coupon, plus 38,000 VND shipping cost to Hanoi (estimated delivery: 1 day).",
         "usage": {
-          "prompt_tokens": 1039,
-          "completion_tokens": 255,
-          "total_tokens": 1294
+          "prompt_tokens": 1107,
+          "completion_tokens": 261,
+          "total_tokens": 1368
         },
-        "latency_ms": 8131,
+        "latency_ms": 12707,
         "provider": "ollama"
       }
     ],
@@ -168,17 +168,17 @@
     ],
     "prompt_history": [
       "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: Need to gather evidence about iPhone pricing before calculating totals with discount and shipping. Starting by checking stock/price of iPhones.\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: Need to gather evidence about iPhone pricing before calculating totals with discount and shipping. Starting by checking stock/price of iPhones.\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: Need to validate WINNER coupon code and calculate shipping cost for 0.8kg package to Hanoi before computing final total. Starting with coupon verification.\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: Need to gather evidence about iPhone pricing before calculating totals with discount and shipping. Starting by checking stock/price of iPhones.\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: Need to validate WINNER coupon code and calculate shipping cost for 0.8kg package to Hanoi before computing final total. Starting with coupon verification.\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Need to calculate shipping cost for 0.8kg package to Hanoi before computing final total with all evidence gathered.\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}",
-      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: Need to gather evidence about iPhone pricing before calculating totals with discount and shipping. Starting by checking stock/price of iPhones.\n\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: Need to validate WINNER coupon code and calculate shipping cost for 0.8kg package to Hanoi before computing final total. Starting with coupon verification.\n\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Need to calculate shipping cost for 0.8kg package to Hanoi before computing final total with all evidence gathered.\n\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}\n\nThought: All evidence gathered - iPhone price, coupon validity/discount percentage, and shipping cost are confirmed. Now calculating final total for checkout.\n\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": true, \"item_quantity\": 2, \"price_per_item\": 25000000, \"subtotal\": 50000000, \"discount_percent\": 10.0, \"discount_amount\": 5000000, \"shipping_cost\": 38000, \"total\": 45038000, \"currency\": \"VND\", \"formula\": \"(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost\"}"
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}",
+      "Question: I want to buy 2 iPhones using code WINNER and ship to Hanoi. The package weight is 0.8 kg. Total?\n\nThought: To calculate the total cost for 2 iPhones with a discount and shipping, I need to gather the base price of an iPhone first using stock information.\nAction: check_stock({\"item_name\": \"iPhone\"})\nObservation: {\"ok\": true, \"item_name\": \"iPhone\", \"price\": 25000000, \"stock\": 15, \"weight_kg\": 0.4, \"status\": \"in_stock\"}\n\nThought: I have the base price of iPhone (25M VND). Now I need to validate the coupon code WINNER for discount percentage and get shipping cost for 0.8kg package to Hanoi before calculating total.\nAction: get_discount({\"coupon_code\": \"WINNER\"})\nObservation: {\"ok\": true, \"coupon_code\": \"WINNER\", \"valid\": true, \"discount_percent\": 10}\n\nThought: Now I have the iPhone price (25M VND), coupon discount (10%), and weight (0.8 kg). Next I need to calculate shipping cost for 0.8kg package to Hanoi before computing final total.\nAction: calc_shipping({\"weight\": 0.8, \"destination\": \"Hanoi\"})\nObservation: {\"ok\": true, \"destination\": \"Hanoi\", \"weight\": 0.8, \"shipping_cost\": 38000, \"estimated_days\": 1}\n\nThought: I have gathered all required data (iPhone price 25M VND per item, WINNER coupon valid for 10% off, shipping cost 38K VND). Now I need to calculate the final total using these values with qty=2 items.\nAction: calc_total({\"item_quantity\": 2, \"price_per_item\": 25000000, \"discount_percent\": 10, \"shipping_cost\": 38000})\nObservation: {\"ok\": true, \"item_quantity\": 2, \"price_per_item\": 25000000, \"subtotal\": 50000000, \"discount_percent\": 10.0, \"discount_amount\": 5000000, \"shipping_cost\": 38000, \"total\": 45038000, \"currency\": \"VND\", \"formula\": \"(price_per_item * item_quantity) * (1 - discount_percent / 100) + shipping_cost\"}"
     ]
   },
   "demo_passed": true,
-  "bonus_signals": [
+  "system_signals": [
     "Live System Demo bằng Ollama local",
     "Failure Handling: evidence gate, repeated-action detection, calc_total prerequisite",
-    "Extra Tools: calc_total và search_policy",
-    "Extra Monitoring: token, latency, cost estimate trong live trace"
+    "Tool mở rộng: calc_total và search_policy",
+    "Monitoring: token, latency, cost estimate trong live trace"
   ]
 }

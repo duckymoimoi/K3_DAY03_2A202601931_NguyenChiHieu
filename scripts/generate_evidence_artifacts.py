@@ -58,7 +58,7 @@ def main() -> None:
             "Latency là tổng latency của các LLM calls trong live demo.",
         ],
     }
-    write_json(ROOT / "artifacts/bonus/monitoring_summary.json", monitoring)
+    write_json(ROOT / "artifacts/monitoring/live_monitoring_summary.json", monitoring)
 
     ablation = {
         "experiment": "So sánh V1 chưa có repeated-action guardrail với V2 đã có guardrail",
@@ -75,28 +75,9 @@ def main() -> None:
         },
         "result": "V2 dừng sau 1 Tool call với repeated_action thay vì lãng phí 3 Tool calls rồi max_steps.",
     }
-    write_json(ROOT / "artifacts/bonus/ablation_guardrail.json", ablation)
+    write_json(ROOT / "artifacts/experiments/ablation_guardrail.json", ablation)
 
-    scorecard = ROOT / "artifacts/bonus/bonus_scorecard.md"
-    scorecard.write_text(
-        "\n".join(
-            [
-                "# Bảng claim bonus",
-                "",
-                "| Hạng mục bonus | Điểm tối đa | Bằng chứng trong repo | Trạng thái |",
-                "|---|---:|---|---|",
-                "| Extra Monitoring | +3 | `artifacts/bonus/monitoring_summary.json` có tokens, latency, token ratio, cost estimate | Có cơ sở claim |",
-                "| Extra Tools | +2 | `calc_total` và `search_policy` trong `src/tools/tools.py`, có tests | Có cơ sở claim |",
-                "| Failure Handling | +3 | repeated-action detector, evidence gate, `calc_total` prerequisite guardrail | Mạnh |",
-                "| Live System Demo | +5 | `artifacts/live/live_system_demo.json` chạy Ollama `qwen3.5:4b`, Agent trả final answer đúng | Mạnh nếu demo trực tiếp được |",
-                "| Ablation Experiment | +2 | `artifacts/bonus/ablation_guardrail.json` so sánh V1/V2 | Có cơ sở claim |",
-                "",
-                "Tổng bonus có thể nhắm tới: 12-15 điểm, tùy instructor đánh giá live demo và mức độ xem `search_policy`/`calc_total` là Extra Tools.",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    print("Generated artifacts/bonus.")
+    print("Generated monitoring and experiment artifacts.")
 
 
 if __name__ == "__main__":

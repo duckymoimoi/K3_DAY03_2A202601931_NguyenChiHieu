@@ -8,12 +8,12 @@
     "cost_estimate_usd": 0.00957
   },
   "agent_ollama": {
-    "prompt_tokens": 3882,
-    "completion_tokens": 1262,
-    "total_tokens": 5144,
-    "latency_ms": 38185,
-    "completion_to_prompt_ratio": 0.3251,
-    "cost_estimate_usd": 0.05144
+    "prompt_tokens": 4010,
+    "completion_tokens": 2413,
+    "total_tokens": 6423,
+    "latency_ms": 75086,
+    "completion_to_prompt_ratio": 0.6017,
+    "cost_estimate_usd": 0.06423
   },
   "deterministic_summary": {
     "baseline_chatbot": {

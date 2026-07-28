@@ -23,9 +23,8 @@ Artifacts:
 - `artifacts/live/ollama_smoke.json`
 - `artifacts/live/ollama_agent_smoke.json`
 - `artifacts/live/live_system_demo.json`
-- `artifacts/bonus/monitoring_summary.json`
-- `artifacts/bonus/ablation_guardrail.json`
-- `artifacts/bonus/bonus_scorecard.md`
+- `artifacts/monitoring/live_monitoring_summary.json`
+- `artifacts/experiments/ablation_guardrail.json`
 
 ## 2. Kiến trúc hệ thống và Tool
 
@@ -101,15 +100,15 @@ python scripts/run_ollama_agent_smoke.py
 
 Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `safe fallback`. Agent V2 có evidence gate và `calc_total` prerequisite guardrail nên không chấp nhận tổng tiền khi thiếu Observation từ `check_stock`, `get_discount` và `calc_shipping`. Với live system demo, Ollama local `qwen3.5:4b` đã đi qua luồng Tool, sau đó trả final answer đúng: `45,038,000 VND`. Kết quả được lưu trong `artifacts/live/live_system_demo.json`.
 
-## 5. Bonus evidence
+## 5. Bằng chứng kỹ thuật bổ sung
 
-| Hạng mục bonus | Bằng chứng |
+| Hạng mục | Bằng chứng |
 | :--- | :--- |
-| Live System Demo | `python scripts/run_live_demo.py`, artifact `artifacts/live/live_system_demo.json`, trạng thái `demo_passed=true`. |
-| Extra Monitoring | `artifacts/bonus/monitoring_summary.json` ghi tokens, latency, token ratio và cost estimate demo. |
-| Extra Tools | `calc_total` và `search_policy` trong `src/tools/tools.py`, có unit tests trong `tests/test_tools.py`. |
+| Live system demo | `python scripts/run_live_demo.py`, artifact `artifacts/live/live_system_demo.json`, trạng thái `demo_passed=true`. |
+| Monitoring | `artifacts/monitoring/live_monitoring_summary.json` ghi tokens, latency, token ratio và cost estimate demo. |
+| Tool mở rộng | `calc_total` và `search_policy` trong `src/tools/tools.py`, có unit tests trong `tests/test_tools.py`. |
 | Failure Handling | repeated-action detector, evidence gate, `calc_total` prerequisite guardrail, có tests trong `tests/test_agent_recovery.py`. |
-| Ablation Experiment | `artifacts/bonus/ablation_guardrail.json` so sánh V1 lặp Tool với V2 dừng an toàn. |
+| Ablation Experiment | `artifacts/experiments/ablation_guardrail.json` so sánh V1 lặp Tool với V2 dừng an toàn. |
 
 ## 6. So sánh Chatbot và Agent
 
@@ -125,7 +124,7 @@ Baseline chạy đúng: một LLM call, không gọi Tool, trả lời dạng `s
 
 - **Bảo mật**: `.env`, logs, model files và API keys đã được ignore.
 - **Guardrails**: Agent có `max_steps`; V2 có repeated-action detection, evidence gate và prerequisite guardrail trước khi gọi `calc_total`.
-- **Observability**: Agent trả về trace, ghi structured logs và có bonus monitoring artifact.
+- **Observability**: Agent trả về trace, ghi structured logs và có monitoring artifact.
 - **UI artifact**: `web/index.html` hiển thị metrics, Tool path, trace timeline và form hỏi live Agent qua `scripts/serve_live_web.py`.
 - **Cải tiến tiếp theo**: thêm schema validation bằng Pydantic, dùng database/API thật, và thêm human confirmation trước hành động thanh toán.
 
